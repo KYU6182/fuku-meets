@@ -9,15 +9,19 @@ import {
   Newspaper,
   Settings,
   Shield,
+  Sparkles,
   Store,
   UserRound,
   Users,
+  WandSparkles,
 } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { clearAdminSession } from "@/lib/adminAuth";
 
 const nav = [
   { label: "Dashboard", href: "/admin", icon: BarChart3 },
+  { label: "Studio", href: "/admin/studio", icon: WandSparkles },
+  { label: "AI Tools", href: "/admin/ai", icon: Sparkles },
   { label: "HOME管理", href: "/admin/home", icon: Home },
   { label: "画像管理", href: "/admin/media", icon: Image },
   { label: "NEWS", href: "/admin/news", icon: Newspaper },
@@ -55,7 +59,7 @@ export default function AdminSidebar({ open, onClose }: { open: boolean; onClose
         </a>
         <nav className="mt-7 flex-1 space-y-1">
           {nav.map(({ label, href, icon: Icon }) => {
-            const active = pathname === href;
+            const active = href === "/admin" ? pathname === href : pathname === href || pathname.startsWith(`${href}/`);
             return (
               <a
                 key={href}

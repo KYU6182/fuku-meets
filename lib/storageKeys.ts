@@ -9,4 +9,6 @@ export const storageKeys = {
   adminSession: "fuku_admin_session",
   adminLogs: "fuku_admin_logs",
   adminDrafts: "fuku_admin_drafts",
+  adminHomeDraft: "fuku_admin_home_draft",
+  adminHomePublished: "fuku_admin_home_published",
 } as const;

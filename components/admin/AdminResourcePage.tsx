@@ -123,6 +123,11 @@ export function AdminEditPage({ kind, mode, id }: { kind: "news" | "rankings" | 
           </AdminCard>
         </aside>
       </div>
+      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-fuku-border bg-white/95 p-3 shadow-phone xl:hidden">
+        <button type="button" onClick={() => save("下書き保存しました")} className="mx-auto flex min-h-[48px] w-full max-w-[430px] items-center justify-center rounded-full bg-fuku-red text-[14px] font-black text-white">
+          下書き保存
+        </button>
+      </div>
       <ToastViewport />
     </AdminLayout>
   );

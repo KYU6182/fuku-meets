@@ -4,16 +4,17 @@ type AdminFormFieldProps = {
   placeholder?: string;
   options?: string[];
   value?: string;
+  onChange?: (value: string) => void;
 };
 
-export default function AdminFormField({ label, type = "text", placeholder, options = [], value }: AdminFormFieldProps) {
+export default function AdminFormField({ label, type = "text", placeholder, options = [], value, onChange }: AdminFormFieldProps) {
   return (
     <label className="block">
       <span className="text-[12px] font-black text-fuku-black">{label}</span>
       {type === "textarea" ? (
-        <textarea defaultValue={value} placeholder={placeholder} className="mt-2 min-h-[128px] w-full rounded-[10px] border border-fuku-border px-3 py-3 text-[14px] outline-none focus:border-fuku-red" />
+        <textarea value={value} onChange={(event) => onChange?.(event.target.value)} placeholder={placeholder} className="mt-2 min-h-[128px] w-full rounded-[10px] border border-fuku-border px-3 py-3 text-[14px] outline-none focus:border-fuku-red" />
       ) : type === "select" ? (
-        <select defaultValue={value} className="mt-2 h-11 w-full rounded-[10px] border border-fuku-border px-3 text-[14px] outline-none focus:border-fuku-red">
+        <select value={value} onChange={(event) => onChange?.(event.target.value)} className="mt-2 h-11 w-full rounded-[10px] border border-fuku-border px-3 text-[14px] outline-none focus:border-fuku-red">
           {options.map((option) => <option key={option}>{option}</option>)}
         </select>
       ) : type === "file" ? (
@@ -21,7 +22,7 @@ export default function AdminFormField({ label, type = "text", placeholder, opti
           jpg / png / webp のみ、SVG禁止、5MB以下
         </div>
       ) : (
-        <input type={type} defaultValue={value} placeholder={placeholder} className="mt-2 h-11 w-full rounded-[10px] border border-fuku-border px-3 text-[14px] outline-none focus:border-fuku-red" />
+        <input type={type} value={value} onChange={(event) => onChange?.(event.target.value)} placeholder={placeholder} className="mt-2 h-11 w-full rounded-[10px] border border-fuku-border px-3 text-[14px] outline-none focus:border-fuku-red" />
       )}
     </label>
   );
