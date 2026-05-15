@@ -1,107 +1,29 @@
 "use client";
 
-import { ArrowDown, ArrowUp, Eye, Image, LayoutTemplate, Save, Send, Smartphone, ToggleLeft, ToggleRight } from "lucide-react";
+import { ArrowDown, ArrowUp, Eye, EyeOff, MonitorSmartphone, RotateCcw, Save, Send, Smartphone } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import AdminLayout from "./AdminLayout";
 import AdminStatusBadge from "./AdminStatusBadge";
-import AdminFormField from "./AdminFormField";
+import FvSlideEditor from "./FvSlideEditor";
+import HeroSection from "../HeroSection";
 import { useToast } from "../Toast";
+import { defaultHomeCmsData, mergeHomeCmsData } from "@/lib/cms";
 import { storageKeys } from "@/lib/storageKeys";
+import type { HomeCmsData, HomeSectionId, HeroSlide } from "@/types/cms";
 
-type StudioSectionId = "hero" | "icons" | "ranking" | "weekend" | "newIn" | "magazine" | "pickup";
-
-type StudioSection = {
-  id: StudioSectionId;
-  label: string;
-  visible: boolean;
-};
-
-type HomeStudioDraft = {
-  page: "home";
-  heroImage: string;
-  heroTitle: string;
-  heroCopy: string;
-  heroCtaText: string;
-  heroCtaLink: string;
-  iconsPeople: string;
-  rankingThemes: string;
-  weekendCategories: string;
-  newInCards: string;
-  magazineTitle: string;
-  magazineCopy: string;
-  pickupArticles: string;
-  sections: StudioSection[];
-  updatedAt?: string;
-};
-
-const defaultDraft: HomeStudioDraft = {
-  page: "home",
-  heroImage: "/images/hero.jpg",
-  heroTitle: "いま福岡で、\n会いたい人と店。",
-  heroCopy: "気になるあの人、行きつけのあの店。\n福岡の“いま”をつなげる。",
-  heroCtaText: "最新ランキングを見る",
-  heroCtaLink: "/ranking",
-  iconsPeople: "YUI / RENA / KEITA",
-  rankingThemes: "好きなスーパー / 好きな駅 / 住みたい街 / 深夜助かる場所",
-  weekendCategories: "居酒屋 / ラーメン / 美容室 / カフェ / パン / シーシャ / クラブ / 人気ランキング",
-  newInCards: "まず行きたい定番スポット / 最初に住みたい街 / はじめての行きつけ特集",
-  magazineTitle: "FUKU-MEETS MAGAZINE",
-  magazineCopy: "福岡の空気を、Webと紙で残すローカルマガジン。",
-  pickupArticles: "LOCAL NEWS / FEATURE / CITY GUIDE",
-  sections: [
-    { id: "hero", label: "FV / Hero", visible: true },
-    { id: "icons", label: "FUKU ICONS", visible: true },
-    { id: "ranking", label: "FUKUOKA RANKING", visible: true },
-    { id: "weekend", label: "WEEKEND GUIDE", visible: true },
-    { id: "newIn", label: "NEW IN FUKUOKA", visible: true },
-    { id: "magazine", label: "MAGAZINE", visible: true },
-    { id: "pickup", label: "PICK UP CONTENTS", visible: true },
-  ],
-};
-
-const mediaOptions = [
-  "/images/hero.jpg",
-  "/images/fukuoka-city.jpg",
-  "/images/paper-cover.jpg",
-  "/images/news-1.jpg",
-];
-
-const sectionFieldMap: Record<StudioSectionId, Array<keyof HomeStudioDraft>> = {
-  hero: ["heroImage", "heroTitle", "heroCopy", "heroCtaText", "heroCtaLink"],
-  icons: ["iconsPeople"],
-  ranking: ["rankingThemes"],
-  weekend: ["weekendCategories"],
-  newIn: ["newInCards"],
-  magazine: ["magazineTitle", "magazineCopy"],
-  pickup: ["pickupArticles"],
-};
-
-const fieldLabels: Partial<Record<keyof HomeStudioDraft, string>> = {
-  heroImage: "FV画像",
-  heroTitle: "FVタイトル",
-  heroCopy: "FVサブコピー",
-  heroCtaText: "FV CTAテキスト",
-  heroCtaLink: "FV CTAリンク",
-  iconsPeople: "表示人物",
-  rankingThemes: "表示ランキングテーマ",
-  weekendCategories: "表示カテゴリ",
-  newInCards: "NEW IN FUKUOKAカード",
-  magazineTitle: "MAGAZINEタイトル",
-  magazineCopy: "MAGAZINEコピー",
-  pickupArticles: "表示記事",
-};
+type MobileMode = "preview" | "edit";
 
 export default function AdminStudioPage() {
-  const [draft, setDraft] = useState<HomeStudioDraft>(defaultDraft);
+  const [draft, setDraft] = useState<HomeCmsData>(defaultHomeCmsData);
   const [selectedPage, setSelectedPage] = useState("home");
-  const [selectedSectionId, setSelectedSectionId] = useState<StudioSectionId>("hero");
+  const [selectedSectionId, setSelectedSectionId] = useState<HomeSectionId>("hero");
+  const [activeSlideIndex, setActiveSlideIndex] = useState(0);
+  const [mobileMode, setMobileMode] = useState<MobileMode>("preview");
   const { showToast, ToastViewport } = useToast();
 
   useEffect(() => {
     const saved = window.localStorage.getItem(storageKeys.adminHomeDraft);
-    if (saved) {
-      setDraft({ ...defaultDraft, ...JSON.parse(saved) });
-    }
+    if (saved) setDraft(mergeHomeCmsData(JSON.parse(saved)));
   }, []);
 
   const selectedSection = useMemo(
@@ -109,14 +31,25 @@ export default function AdminStudioPage() {
     [draft.sections, selectedSectionId],
   );
 
-  function updateField(field: keyof HomeStudioDraft, value: string) {
-    setDraft((current) => ({ ...current, [field]: value }));
+  function updateHero(patch: Partial<HomeCmsData["hero"]>) {
+    setDraft((current) => ({ ...current, hero: { ...current.hero, ...patch } }));
   }
 
-  function toggleSection(sectionId: StudioSectionId) {
+  function updateSlide(index: number, patch: Partial<HeroSlide>) {
     setDraft((current) => ({
       ...current,
-      sections: current.sections.map((section) => (section.id === sectionId ? { ...section, visible: !section.visible } : section)),
+      hero: {
+        ...current.hero,
+        slides: current.hero.slides.map((slide, slideIndex) => (slideIndex === index ? { ...slide, ...patch } : slide)),
+      },
+    }));
+  }
+
+  function toggleSection(sectionId: HomeSectionId) {
+    setDraft((current) => ({
+      ...current,
+      sections: current.sections.map((section) => (section.id === sectionId ? { ...section, isVisible: !section.isVisible } : section)),
+      hero: sectionId === "hero" ? { ...current.hero, isVisible: !current.hero.isVisible } : current.hero,
     }));
   }
 
@@ -143,13 +76,20 @@ export default function AdminStudioPage() {
     const next = { ...draft, updatedAt: new Date().toISOString() };
     window.localStorage.setItem(storageKeys.adminHomePublished, JSON.stringify(next));
     setDraft(next);
-    showToast("公開しました");
+    showToast("公開しました。HOMEに反映されます");
+  }
+
+  function resetDraft() {
+    window.localStorage.removeItem(storageKeys.adminHomeDraft);
+    setDraft(defaultHomeCmsData);
+    setActiveSlideIndex(0);
+    showToast("下書きをリセットしました");
   }
 
   return (
     <AdminLayout title="Visual Studio">
       <div className="mb-4 rounded-[18px] border border-fuku-border bg-white p-4 shadow-soft">
-        <div className="grid gap-3 lg:grid-cols-[220px_1fr_auto_auto_auto] lg:items-center">
+        <div className="grid gap-3 lg:grid-cols-[220px_1fr_auto_auto_auto_auto] lg:items-center">
           <label className="block">
             <span className="text-[11px] font-black uppercase tracking-widest text-fuku-gray">編集ページ</span>
             <select value={selectedPage} onChange={(event) => setSelectedPage(event.target.value)} className="mt-2 h-11 w-full rounded-full border border-fuku-border bg-white px-4 text-[13px] font-black">
@@ -161,11 +101,11 @@ export default function AdminStudioPage() {
             </select>
           </label>
           <div className="rounded-[12px] bg-fuku-light px-4 py-3 text-[12px] font-bold leading-relaxed text-fuku-gray">
-            MVPではHOME編集に対応。ほかのページは同じ構造へ拡張できます。
+            HOMEのFV 5枚スライド、画像、コピー、色、余白、表示順を編集できます。公開した内容だけが公開HOMEに反映されます。
           </div>
           <a href="/" className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-full border border-fuku-border px-5 text-[13px] font-black">
             <Eye size={16} />
-            プレビュー
+            公開ページを見る
           </a>
           <button type="button" onClick={saveDraft} className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-full border border-fuku-border px-5 text-[13px] font-black">
             <Save size={16} />
@@ -173,20 +113,38 @@ export default function AdminStudioPage() {
           </button>
           <button type="button" onClick={publishDraft} className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-full bg-fuku-red px-5 text-[13px] font-black text-white">
             <Send size={16} />
-            公開
+            公開する
+          </button>
+          <button type="button" onClick={resetDraft} className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-full bg-fuku-black px-5 text-[13px] font-black text-white">
+            <RotateCcw size={16} />
+            リセット
           </button>
         </div>
       </div>
 
-      <div className="grid gap-5 xl:grid-cols-[390px_minmax(360px,1fr)]">
-        <EditorPanel
-          draft={draft}
-          selectedSection={selectedSection}
-          onFieldChange={updateField}
-          onToggle={() => toggleSection(selectedSection.id)}
-          onMove={moveSection}
-        />
-        <PreviewPanel draft={draft} selectedSectionId={selectedSectionId} onSelect={setSelectedSectionId} />
+      <div className="mb-4 grid grid-cols-2 gap-2 xl:hidden">
+        <button type="button" onClick={() => setMobileMode("preview")} className={`min-h-[42px] rounded-full text-[13px] font-black ${mobileMode === "preview" ? "bg-fuku-red text-white" : "bg-white text-fuku-black"}`}>プレビュー</button>
+        <button type="button" onClick={() => setMobileMode("edit")} className={`min-h-[42px] rounded-full text-[13px] font-black ${mobileMode === "edit" ? "bg-fuku-red text-white" : "bg-white text-fuku-black"}`}>編集</button>
+      </div>
+
+      <div className="grid gap-5 xl:grid-cols-[430px_minmax(380px,1fr)]">
+        <div className={`${mobileMode === "edit" ? "block" : "hidden"} xl:block`}>
+          <EditorPanel
+            draft={draft}
+            selectedSectionId={selectedSectionId}
+            selectedSectionLabel={selectedSection.label}
+            activeSlideIndex={activeSlideIndex}
+            onSelectedSectionChange={setSelectedSectionId}
+            onActiveSlideIndexChange={setActiveSlideIndex}
+            onHeroChange={updateHero}
+            onSlideChange={updateSlide}
+            onToggleSection={toggleSection}
+            onMoveSection={moveSection}
+          />
+        </div>
+        <div className={`${mobileMode === "preview" ? "block" : "hidden"} xl:block`}>
+          <PreviewPanel draft={draft} selectedSectionId={selectedSectionId} onSelect={(id) => { setSelectedSectionId(id); setMobileMode("edit"); }} />
+        </div>
       </div>
 
       <div className="fixed inset-x-0 bottom-0 z-40 border-t border-fuku-border bg-white/95 p-3 shadow-phone xl:hidden">
@@ -202,95 +160,103 @@ export default function AdminStudioPage() {
 
 function EditorPanel({
   draft,
-  selectedSection,
-  onFieldChange,
-  onToggle,
-  onMove,
+  selectedSectionId,
+  selectedSectionLabel,
+  activeSlideIndex,
+  onSelectedSectionChange,
+  onActiveSlideIndexChange,
+  onHeroChange,
+  onSlideChange,
+  onToggleSection,
+  onMoveSection,
 }: {
-  draft: HomeStudioDraft;
-  selectedSection: StudioSection;
-  onFieldChange: (field: keyof HomeStudioDraft, value: string) => void;
-  onToggle: () => void;
-  onMove: (direction: "up" | "down") => void;
+  draft: HomeCmsData;
+  selectedSectionId: HomeSectionId;
+  selectedSectionLabel: string;
+  activeSlideIndex: number;
+  onSelectedSectionChange: (id: HomeSectionId) => void;
+  onActiveSlideIndexChange: (index: number) => void;
+  onHeroChange: (patch: Partial<HomeCmsData["hero"]>) => void;
+  onSlideChange: (index: number, patch: Partial<HeroSlide>) => void;
+  onToggleSection: (id: HomeSectionId) => void;
+  onMoveSection: (direction: "up" | "down") => void;
 }) {
-  const fields = sectionFieldMap[selectedSection.id];
+  const section = draft.sections.find((item) => item.id === selectedSectionId);
 
   return (
-    <aside className="order-2 rounded-[18px] border border-fuku-border bg-white p-4 shadow-soft xl:order-1">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <p className="text-[11px] font-black uppercase tracking-widest text-fuku-red">Edit Section</p>
-          <h2 className="mt-1 text-[24px] font-black text-fuku-black">{selectedSection.label}</h2>
+    <aside className="space-y-4">
+      <section className="rounded-[18px] border border-fuku-border bg-white p-4 shadow-soft">
+        <div className="mb-4 flex items-start justify-between gap-3">
+          <div>
+            <p className="text-[11px] font-black uppercase tracking-widest text-fuku-red">Section Order</p>
+            <h2 className="mt-1 text-[22px] font-black text-fuku-black">セクション管理</h2>
+          </div>
+          <MonitorSmartphone size={20} />
         </div>
-        <AdminStatusBadge status={selectedSection.visible ? "published" : "private"} />
-      </div>
-
-      <div className="mt-4 grid grid-cols-3 gap-2">
-        <button type="button" onClick={onToggle} className="inline-flex min-h-[42px] items-center justify-center gap-2 rounded-full border border-fuku-border text-[12px] font-black">
-          {selectedSection.visible ? <ToggleRight size={17} /> : <ToggleLeft size={17} />}
-          表示
-        </button>
-        <button type="button" onClick={() => onMove("up")} className="inline-flex min-h-[42px] items-center justify-center gap-2 rounded-full border border-fuku-border text-[12px] font-black">
-          <ArrowUp size={16} />
-          上へ
-        </button>
-        <button type="button" onClick={() => onMove("down")} className="inline-flex min-h-[42px] items-center justify-center gap-2 rounded-full border border-fuku-border text-[12px] font-black">
-          <ArrowDown size={16} />
-          下へ
-        </button>
-      </div>
-
-      <div className="mt-5 space-y-4">
-        {fields.map((field) => {
-          if (field === "heroImage") {
-            return (
-              <div key={field} className="rounded-[14px] border border-fuku-border bg-fuku-light p-3">
-                <p className="text-[12px] font-black text-fuku-black">メディアライブラリ</p>
-                <div className="mt-3 grid grid-cols-2 gap-2">
-                  {mediaOptions.map((media) => (
-                    <button
-                      key={media}
-                      type="button"
-                      onClick={() => onFieldChange("heroImage", media)}
-                      className={`rounded-[10px] border bg-white p-2 text-left text-[10px] font-bold ${
-                        draft.heroImage === media ? "border-fuku-red text-fuku-red" : "border-fuku-border text-fuku-gray"
-                      }`}
-                    >
-                      <span className="mb-2 grid h-14 place-items-center rounded-[8px] bg-[linear-gradient(135deg,#111,#e52421)] text-white">
-                        <Image size={16} />
-                      </span>
-                      {media}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            );
-          }
-
-          return (
-            <AdminFormField
-              key={field}
-              label={fieldLabels[field] ?? field}
-              type={String(draft[field]).length > 42 ? "textarea" : "text"}
-              value={String(draft[field])}
-              onChange={(value) => onFieldChange(field, value)}
-            />
-          );
-        })}
-      </div>
-
-      <div className="mt-5 rounded-[14px] bg-fuku-light p-4">
-        <p className="text-[12px] font-black text-fuku-black">セクション並び替え</p>
-        <div className="mt-3 space-y-2">
-          {draft.sections.map((section, index) => (
-            <div key={section.id} className={`flex items-center justify-between rounded-[10px] bg-white px-3 py-2 text-[12px] font-black ${section.id === selectedSection.id ? "text-fuku-red" : "text-fuku-black"}`}>
-              <span>{index + 1}. {section.label}</span>
-              <span>{section.visible ? "表示" : "非表示"}</span>
-            </div>
+        <div className="space-y-2">
+          {draft.sections.map((item, index) => (
+            <button
+              type="button"
+              key={item.id}
+              onClick={() => onSelectedSectionChange(item.id)}
+              className={`flex min-h-[44px] w-full items-center justify-between rounded-[12px] border px-3 text-left text-[12px] font-black ${
+                selectedSectionId === item.id ? "border-fuku-red bg-[#fff1f1] text-fuku-red" : "border-fuku-border bg-white text-fuku-black"
+              }`}
+            >
+              <span>{index + 1}. {item.label}</span>
+              <span>{item.isVisible ? "表示" : "非表示"}</span>
+            </button>
           ))}
         </div>
-      </div>
+      </section>
+
+      <section className="rounded-[18px] border border-fuku-border bg-white p-4 shadow-soft">
+        <div className="mb-4 flex items-start justify-between gap-3">
+          <div>
+            <p className="text-[11px] font-black uppercase tracking-widest text-fuku-red">Edit Panel</p>
+            <h2 className="mt-1 text-[24px] font-black text-fuku-black">{selectedSectionLabel}</h2>
+          </div>
+          <AdminStatusBadge status={section?.isVisible ? "published" : "private"} />
+        </div>
+        <div className="mb-5 grid grid-cols-3 gap-2">
+          <button type="button" onClick={() => onToggleSection(selectedSectionId)} className="inline-flex min-h-[42px] items-center justify-center gap-2 rounded-full border border-fuku-border text-[12px] font-black">
+            {section?.isVisible ? <Eye size={15} /> : <EyeOff size={15} />}
+            表示
+          </button>
+          <button type="button" onClick={() => onMoveSection("up")} className="inline-flex min-h-[42px] items-center justify-center gap-2 rounded-full border border-fuku-border text-[12px] font-black">
+            <ArrowUp size={15} />
+            上へ
+          </button>
+          <button type="button" onClick={() => onMoveSection("down")} className="inline-flex min-h-[42px] items-center justify-center gap-2 rounded-full border border-fuku-border text-[12px] font-black">
+            <ArrowDown size={15} />
+            下へ
+          </button>
+        </div>
+
+        {selectedSectionId === "hero" ? (
+          <FvSlideEditor
+            hero={draft.hero}
+            activeIndex={activeSlideIndex}
+            onActiveIndexChange={onActiveSlideIndexChange}
+            onHeroChange={onHeroChange}
+            onSlideChange={onSlideChange}
+          />
+        ) : (
+          <GenericSectionEditor sectionLabel={selectedSectionLabel} />
+        )}
+      </section>
     </aside>
+  );
+}
+
+function GenericSectionEditor({ sectionLabel }: { sectionLabel: string }) {
+  return (
+    <div className="rounded-[14px] border border-fuku-border bg-fuku-light p-4">
+      <p className="text-[14px] font-black text-fuku-black">{sectionLabel}の編集</p>
+      <p className="mt-2 text-[12px] font-bold leading-relaxed text-fuku-gray">
+        まずはFV編集を重点対応しています。このセクションも同じStyle Editorへ拡張できるように表示/非表示と並び替えを保存します。
+      </p>
+    </div>
   );
 }
 
@@ -299,69 +265,53 @@ function PreviewPanel({
   selectedSectionId,
   onSelect,
 }: {
-  draft: HomeStudioDraft;
-  selectedSectionId: StudioSectionId;
-  onSelect: (id: StudioSectionId) => void;
+  draft: HomeCmsData;
+  selectedSectionId: HomeSectionId;
+  onSelect: (id: HomeSectionId) => void;
 }) {
   return (
-    <section className="order-1 xl:order-2">
+    <section>
       <div className="mb-3 flex items-center gap-2 text-[12px] font-black text-fuku-gray">
         <Smartphone size={16} />
-        スマホプレビュー。セクションをクリックして編集できます。
+        リアルタイムスマホプレビュー。クリックすると編集パネルへ移動します。
       </div>
       <div className="mx-auto max-w-[430px] overflow-hidden rounded-[32px] border-[10px] border-fuku-black bg-white shadow-phone">
         <div className="flex h-12 items-center justify-between border-b border-fuku-border px-5">
           <span className="headline-condensed text-[24px] text-fuku-black">FUKU-MEETS</span>
-          <LayoutTemplate size={18} />
+          <span className="text-[11px] font-black text-fuku-red">DRAFT</span>
         </div>
-        <div className="max-h-[680px] overflow-y-auto bg-white p-4">
-          {draft.sections.map((section) => {
-            if (!section.visible) return null;
-            return (
-              <button
-                type="button"
-                key={section.id}
-                onClick={() => onSelect(section.id)}
-                className={`mb-4 block w-full rounded-[16px] border p-4 text-left transition ${
-                  selectedSectionId === section.id ? "border-fuku-red ring-2 ring-fuku-red/20" : "border-fuku-border"
-                }`}
-              >
-                <PreviewSection draft={draft} section={section} />
-              </button>
-            );
-          })}
+        <div className="max-h-[720px] overflow-y-auto bg-white pb-6">
+          {draft.sections.filter((section) => section.isVisible).map((section) => (
+            <div
+              key={section.id}
+              role="button"
+              tabIndex={0}
+              onClick={() => onSelect(section.id)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" || event.key === " ") onSelect(section.id);
+              }}
+              className={`block w-full border-2 text-left transition ${
+                selectedSectionId === section.id ? "border-fuku-red" : "border-transparent"
+              }`}
+            >
+              {section.id === "hero" ? (
+                <HeroSection hero={draft.hero} />
+              ) : (
+                <PreviewPlaceholder label={section.label} />
+              )}
+            </div>
+          ))}
         </div>
       </div>
     </section>
   );
 }
 
-function PreviewSection({ draft, section }: { draft: HomeStudioDraft; section: StudioSection }) {
-  if (section.id === "hero") {
-    return (
-      <div className="min-h-[260px] rounded-[14px] bg-[linear-gradient(135deg,#111,#4b1a1a)] p-5 text-white">
-        <span className="rounded-full bg-fuku-red px-3 py-1 text-[11px] font-black">特集</span>
-        <h3 className="mt-12 whitespace-pre-line text-[28px] font-black leading-tight">{draft.heroTitle}</h3>
-        <p className="mt-4 whitespace-pre-line text-[12px] font-bold leading-relaxed text-white/80">{draft.heroCopy}</p>
-        <span className="mt-5 inline-flex rounded-full bg-fuku-red px-4 py-3 text-[12px] font-black">{draft.heroCtaText}</span>
-      </div>
-    );
-  }
-
-  const body: Record<StudioSectionId, string> = {
-    hero: "",
-    icons: draft.iconsPeople,
-    ranking: draft.rankingThemes,
-    weekend: draft.weekendCategories,
-    newIn: draft.newInCards,
-    magazine: `${draft.magazineTitle}\n${draft.magazineCopy}`,
-    pickup: draft.pickupArticles,
-  };
-
+function PreviewPlaceholder({ label }: { label: string }) {
   return (
-    <div>
-      <p className="headline-condensed text-[28px] uppercase leading-none text-fuku-black">{section.label}</p>
-      <p className="mt-3 whitespace-pre-line text-[12px] font-bold leading-relaxed text-fuku-gray">{body[section.id]}</p>
+    <div className="px-4 py-6">
+      <p className="headline-condensed text-[34px] uppercase leading-none text-fuku-black">{label}</p>
+      <p className="mt-2 text-[12px] font-bold text-fuku-gray">クリックして表示/非表示や順番を編集</p>
       <div className="mt-4 h-24 rounded-[12px] bg-[linear-gradient(135deg,#f2eee8,#fff1f1)]" />
     </div>
   );

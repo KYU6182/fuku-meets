@@ -7,6 +7,7 @@ import BottomNav from "@/components/BottomNav";
 import Button from "@/components/Button";
 import Header from "@/components/Header";
 import QuickActionButton from "@/components/QuickActionButton";
+import SpotCommentForm from "@/components/SpotCommentForm";
 import { getSpotBySlug, spots } from "@/lib/data/spots";
 import { storageKeys } from "@/lib/storageKeys";
 
@@ -99,7 +100,11 @@ export default function SpotDetailPage() {
           </div>
         </DetailSection>
 
-        <DetailSection title="推しコメント">
+        <DetailSection title="みんなの推しコメント">
+          <SpotCommentForm targetId={spot.slug} targetTitle={spot.name} />
+        </DetailSection>
+
+        <DetailSection title="編集部ピックアップコメント">
           <div className="space-y-3">
             {spot.comments.map((comment) => (
               <article key={comment.user} className="rounded-[12px] border border-fuku-border bg-white p-4">

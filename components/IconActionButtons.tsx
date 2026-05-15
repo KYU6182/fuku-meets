@@ -3,6 +3,7 @@
 import { Bookmark, Heart, UserPlus } from "lucide-react";
 import { useEffect, useState } from "react";
 import { storageKeys } from "@/lib/storageKeys";
+import { hasSupportedIcon, supportIcon } from "@/lib/iconVoteSystem";
 import { addToLocalList, useToast } from "./Toast";
 
 function hasLocalValue(key: string, value: string) {
@@ -21,7 +22,7 @@ export default function IconActionButtons({ slug, compact = false }: { slug: str
   useEffect(() => {
     setFollowed(hasLocalValue(storageKeys.followedIcons, slug));
     setSaved(hasLocalValue(storageKeys.savedIcons, slug));
-    setSupported(hasLocalValue(storageKeys.supportedIcons, slug));
+    setSupported(hasLocalValue(storageKeys.supportedIcons, slug) || hasSupportedIcon(slug));
   }, [slug]);
 
   function act(type: "follow" | "save" | "support") {
@@ -36,10 +37,13 @@ export default function IconActionButtons({ slug, compact = false }: { slug: str
       showToast(saved ? "保存済みです" : "保存しました");
     }
     if (type === "support") {
-      addToLocalList(storageKeys.supportedIcons, slug);
-      if (!supported) setSupportCount((value) => value + 1);
-      setSupported(true);
-      showToast(supported ? "応援済みです" : "応援しました");
+      const result = supportIcon(slug);
+      if (result.ok) {
+        addToLocalList(storageKeys.supportedIcons, slug);
+        setSupportCount((value) => value + 1);
+        setSupported(true);
+      }
+      showToast(result.message);
     }
   }
 

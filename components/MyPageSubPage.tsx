@@ -3,12 +3,18 @@
 import { Bookmark, Crown, Heart, MessageCircle, Settings, UserRound } from "lucide-react";
 import { useEffect, useState } from "react";
 import BottomNav from "./BottomNav";
+import Button from "./Button";
 import Header from "./Header";
 import LinkCard from "./LinkCard";
 import PageHero from "./PageHero";
+import UserBadgeList from "./UserBadgeList";
+import UserPostCard from "./UserPostCard";
 import { storageKeys } from "@/lib/storageKeys";
+import { calculateUserLevel, getCurrentUserProfile, getUserBadges, getUserComments, getUserPosts, getUserStats } from "@/lib/userCommunity";
+import { getCurrentUser } from "@/lib/userAuth";
+import type { UserBadge, UserPost } from "@/types/community";
 
-type MyPageKind = "dashboard" | "saves" | "votes" | "icons" | "comments" | "settings";
+type MyPageKind = "dashboard" | "saves" | "votes" | "icons" | "comments" | "posts" | "badges" | "good" | "settings";
 
 const titles: Record<MyPageKind, { title: string; copy: string }> = {
   dashboard: { title: "MY DASHBOARD", copy: "今週のアクション状況をまとめて確認。" },
@@ -16,13 +22,22 @@ const titles: Record<MyPageKind, { title: string; copy: string }> = {
   votes: { title: "VOTES", copy: "投票したランキングと対象。" },
   icons: { title: "MY ICONS", copy: "フォロー中・応援中のFUKU ICONS。" },
   comments: { title: "COMMENTS", copy: "自分の推しコメント一覧。" },
+  posts: { title: "MY POSTS", copy: "投稿した推しコメントと写真。" },
+  badges: { title: "BADGES", copy: "獲得したFUKUバッジ。" },
+  good: { title: "GOOD", copy: "もらったGOODと反応。" },
   settings: { title: "SETTINGS", copy: "プロフィールと通知設定。" },
 };
 
 export default function MyPageSubPage({ kind }: { kind: MyPageKind }) {
   const [items, setItems] = useState<Record<string, string[]>>({});
+  const [posts, setPosts] = useState<UserPost[]>([]);
+  const [badges, setBadges] = useState<UserBadge[]>([]);
+  const [loggedIn, setLoggedIn] = useState(false);
+  const [goodTotal, setGoodTotal] = useState(0);
 
   useEffect(() => {
+    const user = getCurrentUser();
+    setLoggedIn(Boolean(user));
     setItems({
       savedSpots: read(storageKeys.savedSpots),
       savedNews: read(storageKeys.savedNews),
@@ -31,6 +46,12 @@ export default function MyPageSubPage({ kind }: { kind: MyPageKind }) {
       supportedIcons: read(storageKeys.supportedIcons),
       followedIcons: read(storageKeys.followedIcons),
     });
+    const profile = getCurrentUserProfile();
+    if (profile) {
+      setPosts(getUserPosts(profile.userId));
+      setBadges(getUserBadges(profile.userId));
+      setGoodTotal(getUserStats(profile.userId).goods);
+    }
   }, []);
 
   return (
@@ -39,7 +60,16 @@ export default function MyPageSubPage({ kind }: { kind: MyPageKind }) {
       <main className="pb-28">
         <PageHero title={titles[kind].title} copy={titles[kind].copy} />
         <section className="space-y-4 px-4 py-5">
-          {kind === "dashboard" ? (
+          {!loggedIn ? (
+            <div className="rounded-[16px] border border-fuku-border bg-white p-5 text-center">
+              <UserRound className="mx-auto text-fuku-red" size={32} />
+              <p className="mt-4 text-[15px] font-black text-fuku-black">ログインすると履歴を確認できます</p>
+              <div className="mt-5 grid grid-cols-2 gap-3">
+                <Button href="/auth/register">会員登録</Button>
+                <Button href="/auth/login" variant="outline">ログイン</Button>
+              </div>
+            </div>
+          ) : kind === "dashboard" ? (
             <>
               <ActionSummary items={items} />
               <LinkCard href="/mypage/saves" title="保存したお店" description="あとで行きたいスポットを確認" icon={<Bookmark size={20} />} />
@@ -55,7 +85,19 @@ export default function MyPageSubPage({ kind }: { kind: MyPageKind }) {
           ) : kind === "icons" ? (
             <ListGroups groups={[["フォロー中", items.followedIcons], ["応援した", items.supportedIcons], ["表紙投票した", items.votedItems?.filter((item) => item.startsWith("cover:"))]]} />
           ) : kind === "comments" ? (
-            <ListGroups groups={[["推しコメント", ["まだ投稿はありません", "コメント投稿機能は次フェーズで拡張予定"]]]} />
+            <ListGroups groups={[["推しコメント", getUserComments().map((comment) => `${comment.targetTitle}: ${comment.body}`)]]} />
+          ) : kind === "posts" ? (
+            <div className="grid gap-3">
+              {posts.length ? posts.map((post) => <UserPostCard key={post.id} post={post} />) : <EmptyCopy text="まだ投稿はありません" />}
+            </div>
+          ) : kind === "badges" ? (
+            <UserBadgeList badges={badges} compact />
+          ) : kind === "good" ? (
+            <div className="rounded-[16px] border border-fuku-border bg-white p-5">
+              <h2 className="text-[18px] font-black text-fuku-black">もらったGOOD</h2>
+              <p className="mt-4 text-[54px] font-black leading-none text-fuku-red">{goodTotal}</p>
+              <p className="mt-3 text-[13px] font-bold text-fuku-gray">自分のコメントがGOODされると、FUKU LEVELが上がります。</p>
+            </div>
           ) : (
             <SettingsPanel />
           )}
@@ -64,6 +106,10 @@ export default function MyPageSubPage({ kind }: { kind: MyPageKind }) {
       <BottomNav active="mypage" />
     </div>
   );
+}
+
+function EmptyCopy({ text }: { text: string }) {
+  return <p className="rounded-[12px] bg-white p-5 text-[13px] font-bold text-fuku-gray">{text}</p>;
 }
 
 function read(key: string) {

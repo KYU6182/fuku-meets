@@ -6,27 +6,22 @@ import BottomNav from "@/components/BottomNav";
 import Button from "@/components/Button";
 import Header from "@/components/Header";
 import PageHero from "@/components/PageHero";
-import { addToLocalList, useToast } from "@/components/Toast";
+import { useToast } from "@/components/Toast";
 import { icons } from "@/lib/data/icons";
-import { storageKeys } from "@/lib/storageKeys";
+import { coverVoteIcon, getIconCoverDelta, hasCoverVotedToday } from "@/lib/iconVoteSystem";
 
 export default function CoverVotePage() {
   const [votedToday, setVotedToday] = useState(false);
   const { showToast, ToastViewport } = useToast();
 
   useEffect(() => {
-    setVotedToday(window.localStorage.getItem("fuku_cover_vote_date") === todayKey());
+    setVotedToday(hasCoverVotedToday());
   }, []);
 
   function vote(slug: string) {
-    if (votedToday) {
-      showToast("本日の投票権は使用済みです");
-      return;
-    }
-    addToLocalList(storageKeys.votedItems, `cover:${slug}:${todayKey()}`);
-    window.localStorage.setItem("fuku_cover_vote_date", todayKey());
-    setVotedToday(true);
-    showToast("表紙に投票しました");
+    const result = coverVoteIcon(slug);
+    if (result.ok) setVotedToday(true);
+    showToast(result.message);
   }
 
   return (
@@ -49,7 +44,7 @@ export default function CoverVotePage() {
                 <div className="min-w-0 flex-1">
                   <p className="text-[14px] font-black">{icon.name}</p>
                   <p className="text-[11px] font-bold text-fuku-gray">{icon.category}</p>
-                  <p className="text-[11px] font-black">{icon.votes.toLocaleString()}票</p>
+                  <p className="text-[11px] font-black">{(icon.votes + getIconCoverDelta(icon.slug)).toLocaleString()}票</p>
                 </div>
                 <button type="button" onClick={() => vote(icon.slug)} className={`min-h-[40px] rounded-full px-4 text-[12px] font-black ${votedToday ? "bg-fuku-light text-fuku-gray" : "bg-fuku-red text-white"}`}>
                   {votedToday ? "投票済み" : "投票する"}
@@ -67,8 +62,4 @@ export default function CoverVotePage() {
       <ToastViewport />
     </div>
   );
-}
-
-function todayKey() {
-  return new Date().toISOString().slice(0, 10);
 }

@@ -18,6 +18,7 @@ import BottomNav from "./BottomNav";
 import Header from "./Header";
 import { addToLocalList, useToast } from "./Toast";
 import IconActionButtons from "./IconActionButtons";
+import { supportIcon } from "@/lib/iconVoteSystem";
 import { storageKeys } from "@/lib/storageKeys";
 
 type IconPerson = {
@@ -190,9 +191,10 @@ const comments = [
   },
 ];
 
-function support() {
-  addToLocalList(storageKeys.supportedIcons, "icons");
-  showGlobalToast("応援しました");
+function support(slug = "yui") {
+  const result = supportIcon(slug);
+  if (result.ok) addToLocalList(storageKeys.supportedIcons, slug);
+  showGlobalToast(result.message);
 }
 
 function save() {
@@ -285,7 +287,7 @@ function WeeklyIconCard() {
               </a>
               <button
                 type="button"
-                onClick={support}
+                onClick={() => support("yui")}
                 className="flex min-h-[44px] items-center justify-center gap-2 rounded-[8px] border border-fuku-red bg-white text-[13px] font-black text-fuku-red"
               >
                 <Heart size={17} />
@@ -386,7 +388,7 @@ function RankingListRow({ person }: { person: IconPerson }) {
       </div>
       <div className="text-right">
         <p className="text-[12px] font-black text-fuku-black">{person.votes.toLocaleString()}票</p>
-        <button type="button" onClick={support} className="mt-1 min-h-[30px] rounded-full border border-fuku-red px-4 text-[11px] font-black text-fuku-red">
+        <button type="button" onClick={() => support(person.name.toLowerCase())} className="mt-1 min-h-[30px] rounded-full border border-fuku-red px-4 text-[11px] font-black text-fuku-red">
           応援する
         </button>
       </div>
@@ -448,7 +450,7 @@ function NewFaceSection() {
               <h3 className="mt-7 text-[16px] font-black text-fuku-black">{face.name}</h3>
               <p className="text-[11px] font-bold text-fuku-black">{face.category}</p>
               <p className="mt-1 text-[10px] font-bold text-fuku-gray">{face.area}</p>
-              <button type="button" onClick={support} className="mt-3 min-h-[32px] w-full rounded-full border border-fuku-red text-[11px] font-black text-fuku-red">
+              <button type="button" onClick={() => support(face.name.toLowerCase())} className="mt-3 min-h-[32px] w-full rounded-full border border-fuku-red text-[11px] font-black text-fuku-red">
                 応援する
               </button>
             </div>

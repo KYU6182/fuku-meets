@@ -9,21 +9,26 @@ import Button from "./Button";
 import Header from "./Header";
 import Modal from "./Modal";
 import { addToLocalList, useToast } from "./Toast";
+import { coverVoteIcon, supportIcon } from "@/lib/iconVoteSystem";
 import { storageKeys } from "@/lib/storageKeys";
 
 export default function IconProfilePage({ icon }: { icon: FukuIcon }) {
   const [voteOpen, setVoteOpen] = useState(false);
+  const [voteMode, setVoteMode] = useState<"support" | "cover">("support");
   const [votes, setVotes] = useState(icon.votes);
   const [voted, setVoted] = useState(false);
   const { showToast, ToastViewport } = useToast();
 
-  function completeVote(type = "投票しました") {
-    addToLocalList(storageKeys.supportedIcons, icon.slug);
-    addToLocalList(storageKeys.votedItems, `icon:${icon.slug}`);
-    setVotes((value) => value + 1);
-    setVoted(true);
-    setVoteOpen(false);
-    showToast(type);
+  function completeVote() {
+    const result = voteMode === "cover" ? coverVoteIcon(icon.slug) : supportIcon(icon.slug);
+    if (result.ok) {
+      addToLocalList(storageKeys.supportedIcons, icon.slug);
+      addToLocalList(storageKeys.votedItems, `${voteMode}:${icon.slug}`);
+      setVotes((value) => value + 1);
+      setVoted(true);
+      setVoteOpen(false);
+    }
+    showToast(result.message);
   }
 
   return (
@@ -57,7 +62,7 @@ export default function IconProfilePage({ icon }: { icon: FukuIcon }) {
             本日の投票権 {voted ? "0/1" : "1/1"}
           </p>
           <div className="mt-4 grid grid-cols-2 gap-3">
-            <Button onClick={() => setVoteOpen(true)}>応援する</Button>
+            <Button onClick={() => { setVoteMode("support"); setVoteOpen(true); }}>応援する</Button>
             <Button
               variant="outline"
               onClick={() => {
@@ -135,7 +140,7 @@ export default function IconProfilePage({ icon }: { icon: FukuIcon }) {
 
         <section className="bg-white px-4 py-6">
           <div className="grid grid-cols-2 gap-3">
-            <Button onClick={() => setVoteOpen(true)}>表紙に投票する</Button>
+            <Button onClick={() => { setVoteMode("cover"); setVoteOpen(true); }}>表紙に投票する</Button>
             <Button href="https://instagram.com/fuku_meets.jp" variant="light">
               <Instagram size={15} />
               Instagram
@@ -144,12 +149,12 @@ export default function IconProfilePage({ icon }: { icon: FukuIcon }) {
         </section>
       </main>
       <BottomNav />
-      <Modal open={voteOpen} title={`${icon.name}に投票しますか？`} onClose={() => setVoteOpen(false)}>
+      <Modal open={voteOpen} title={`${icon.name}に${voteMode === "cover" ? "表紙投票" : "応援"}しますか？`} onClose={() => setVoteOpen(false)}>
         <p className="text-[13px] font-bold leading-relaxed text-fuku-gray">
           1日1回投票できる想定です。MVPでは端末内に投票履歴を保存します。
         </p>
-        <Button onClick={() => completeVote()} className="mt-5 w-full">
-          投票する
+        <Button onClick={completeVote} className="mt-5 w-full">
+          {voteMode === "cover" ? "表紙に投票する" : "応援する"}
         </Button>
       </Modal>
       <ToastViewport />

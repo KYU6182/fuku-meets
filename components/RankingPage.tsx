@@ -25,8 +25,12 @@ import type { ElementType } from "react";
 import { useEffect, useState } from "react";
 import BottomNav from "./BottomNav";
 import Header from "./Header";
+import RankingCommentSection from "./RankingCommentSection";
+import RankingPickedComments from "./RankingPickedComments";
+import RankingVoteButton from "./RankingVoteButton";
 import { addToLocalList, useToast } from "./Toast";
 import { rankingThemeAliases } from "@/lib/data/rankings";
+import { getEntryVoteCount, getRankingTheme } from "@/lib/rankingSystem";
 import { storageKeys } from "@/lib/storageKeys";
 
 type CategoryId = "food" | "people" | "daily" | "night" | "area";
@@ -220,6 +224,60 @@ function save() {
   showGlobalToast("保存しました");
 }
 
+const themeSlugAliases: Record<string, string> = {
+  city: "area",
+  "night-help": "late-night",
+};
+
+const entrySlugAliases: Record<string, string> = {
+  ボンラパス: "bon-repas",
+  ハローデイ: "halloday",
+  サニー: "sunny",
+  マックスバリュ: "maxvalu",
+  にしてつストア: "nishitetsu-store",
+  TRIAL: "trial",
+  業務スーパー: "gyomu-super",
+  レガネット: "reganet",
+  マキイ: "makii",
+  ロピア: "lopia",
+  薬院駅: "yakuin-station",
+  天神駅: "tenjin-station",
+  博多駅: "hakata-station",
+  薬院: "yakuin",
+  大名: "daimyo",
+  六本松: "ropponmatsu",
+  "セブン-イレブン": "seven-eleven",
+  "TRIAL GO": "trial-go",
+  すき家: "sukiya",
+};
+
+function themeRouteSlug(themeId: string) {
+  return themeSlugAliases[themeId] ?? themeId;
+}
+
+function entryRouteSlug(name: string) {
+  return entrySlugAliases[name] ?? name.toLowerCase().replace(/\s+/g, "-").replace(/[^\w-]/g, "");
+}
+
+function systemEntryFor(themeId: string, name: string) {
+  const theme = getRankingTheme(themeRouteSlug(themeId));
+  const entrySlug = entryRouteSlug(name);
+  const entry = theme?.entries.find((item) => item.slug === entrySlug);
+  return theme && entry ? { theme, entry } : null;
+}
+
+function displayVotes(themeId: string, item: RankingItem) {
+  const system = systemEntryFor(themeId, item.name);
+  if (system) return `${getEntryVoteCount(system.theme.slug, system.entry).toLocaleString()}票`;
+  return item.votes;
+}
+
+function withVoteDelta(votes: string, delta: number) {
+  if (!delta) return votes;
+  const count = Number(votes.replace(/[^\d]/g, "")) || 0;
+  return `${(count + delta).toLocaleString()}票`;
+}
+
 function RankingHero() {
   return (
     <section className="relative overflow-hidden border-b border-fuku-border bg-white px-5 pb-7 pt-7">
@@ -348,25 +406,31 @@ function PickupRankingThemes({
   );
 }
 
-function RankingTopCard({ item }: { item: RankingItem }) {
+function RankingTopCard({ item, themeId }: { item: RankingItem; themeId: string }) {
+  const [voteDelta, setVoteDelta] = useState(0);
   const badgeClass =
     item.rank === 1 ? "bg-[#f5b400]" : item.rank === 2 ? "bg-[#9ca3af]" : "bg-[#c9824a]";
+  const rankingSlug = themeRouteSlug(themeId);
+  const entrySlug = entryRouteSlug(item.name);
+  const system = systemEntryFor(themeId, item.name);
 
   return (
     <article className="overflow-hidden rounded-[12px] border border-fuku-border bg-white">
-      <div
-        className="relative h-[112px] bg-fuku-light bg-cover bg-center"
-        style={{
-          backgroundImage: `linear-gradient(135deg, rgba(255,255,255,.12), rgba(17,17,17,.16)), url('${item.image}')`,
-        }}
-      >
-        <span className={`absolute left-2 top-2 grid h-9 w-9 place-items-center rounded-full text-[17px] font-black text-white ${badgeClass}`}>
-          {item.rank}
-        </span>
-      </div>
+      <a href={`/ranking/${rankingSlug}/${entrySlug}`} className="block">
+        <div
+          className="relative h-[112px] bg-fuku-light bg-cover bg-center"
+          style={{
+            backgroundImage: `linear-gradient(135deg, rgba(255,255,255,.12), rgba(17,17,17,.16)), url('${item.image}')`,
+          }}
+        >
+          <span className={`absolute left-2 top-2 grid h-9 w-9 place-items-center rounded-full text-[17px] font-black text-white ${badgeClass}`}>
+            {item.rank}
+          </span>
+        </div>
+      </a>
       <div className="p-3">
-        <h3 className="text-[15px] font-black text-fuku-black">{item.name}</h3>
-        <p className="mt-1 text-[18px] font-black text-fuku-red">{item.votes}</p>
+        <a href={`/ranking/${rankingSlug}/${entrySlug}`} className="text-[15px] font-black text-fuku-black">{item.name} 〉</a>
+        <p className="mt-1 text-[18px] font-black text-fuku-red">{withVoteDelta(displayVotes(themeId, item), voteDelta)}</p>
         <div className="mt-3 grid grid-cols-[44px_1fr] gap-2">
           <button
             type="button"
@@ -376,39 +440,38 @@ function RankingTopCard({ item }: { item: RankingItem }) {
           >
             <Bookmark size={18} />
           </button>
-          <button
-            type="button"
-            onClick={vote}
-            className="min-h-[40px] rounded-[8px] bg-fuku-red text-[12px] font-black text-white"
-          >
-            投票する
-          </button>
+          <RankingVoteButton rankingSlug={rankingSlug} entrySlug={entrySlug} onVoted={() => setVoteDelta((value) => value + 1)} />
         </div>
+        <RankingPickedComments comments={system?.entry.pickedComments} />
       </div>
     </article>
   );
 }
 
-function RankingListItem({ item }: { item: RankingItem }) {
+function RankingListItem({ item, themeId }: { item: RankingItem; themeId: string }) {
+  const [voteDelta, setVoteDelta] = useState(0);
+  const rankingSlug = themeRouteSlug(themeId);
+  const entrySlug = entryRouteSlug(item.name);
+  const system = systemEntryFor(themeId, item.name);
+
   return (
     <li className="grid grid-cols-[34px_1fr_auto] items-center gap-2 border-b border-fuku-border py-2">
       <span className="text-center text-[19px] font-black text-fuku-black">{item.rank}</span>
       <div className="min-w-0">
-        <p className="truncate text-[14px] font-black text-fuku-black">{item.name}</p>
+        <a href={`/ranking/${rankingSlug}/${entrySlug}`} className="truncate text-[14px] font-black text-fuku-black">{item.name} 〉</a>
         {item.note ? (
           <span className="mt-1 inline-flex rounded-full bg-[#ffe1e1] px-2 py-1 text-[10px] font-black text-fuku-red">
             {item.note}
           </span>
         ) : null}
+        <RankingPickedComments comments={system?.entry.pickedComments} />
       </div>
       <div className="flex items-center gap-2">
-        <span className="whitespace-nowrap text-[13px] font-black text-fuku-black">{item.votes}</span>
+        <span className="whitespace-nowrap text-[13px] font-black text-fuku-black">{withVoteDelta(displayVotes(themeId, item), voteDelta)}</span>
         <button type="button" onClick={save} className="grid h-8 w-8 place-items-center rounded-[7px] border border-fuku-border" aria-label="保存">
           <Bookmark size={15} />
         </button>
-        <button type="button" onClick={vote} className="min-h-[32px] rounded-[7px] bg-fuku-red px-3 text-[11px] font-black text-white">
-          投票する
-        </button>
+        <RankingVoteButton rankingSlug={rankingSlug} entrySlug={entrySlug} compact onVoted={() => setVoteDelta((value) => value + 1)} />
       </div>
     </li>
   );
@@ -432,12 +495,12 @@ function SelectedRankingSection({ theme }: { theme: RankingTheme }) {
       </div>
       <div className="grid grid-cols-3 gap-3">
         {top3.map((item) => (
-          <RankingTopCard key={item.name} item={item} />
+          <RankingTopCard key={item.name} item={item} themeId={theme.id} />
         ))}
       </div>
       <ol className="mt-4 rounded-[12px] border border-fuku-border bg-white px-3">
         {rest.map((item) => (
-          <RankingListItem key={item.name} item={item} />
+          <RankingListItem key={item.name} item={item} themeId={theme.id} />
         ))}
       </ol>
     </section>
@@ -560,6 +623,7 @@ export default function RankingPage() {
           onSelect={setSelectedRanking}
         />
         <SelectedRankingSection theme={selectedTheme} />
+        <RankingCommentSection rankingSlug={themeRouteSlug(selectedTheme.id)} title={selectedTheme.title} />
         <RankingVoteBanner />
         <LatestComments />
         <RankingThemeRequest />
