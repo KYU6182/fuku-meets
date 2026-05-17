@@ -30,8 +30,10 @@ import RankingPickedComments from "./RankingPickedComments";
 import RankingVoteButton from "./RankingVoteButton";
 import { addToLocalList, useToast } from "./Toast";
 import { rankingThemeAliases } from "@/lib/data/rankings";
+import { getDefaultRankingCmsData, getPublishedRanking } from "@/lib/cms";
 import { getEntryVoteCount, getRankingTheme } from "@/lib/rankingSystem";
 import { storageKeys } from "@/lib/storageKeys";
+import type { RankingCmsData } from "@/types/cms";
 
 type CategoryId = "food" | "people" | "daily" | "night" | "area";
 
@@ -278,7 +280,7 @@ function withVoteDelta(votes: string, delta: number) {
   return `${(count + delta).toLocaleString()}票`;
 }
 
-function RankingHero() {
+function RankingHero({ cms }: { cms: RankingCmsData }) {
   return (
     <section className="relative overflow-hidden border-b border-fuku-border bg-white px-5 pb-7 pt-7">
       <div className="absolute right-4 top-16 h-28 w-36 rounded-full bg-[#fff1f1]" />
@@ -286,10 +288,10 @@ function RankingHero() {
       <div className="absolute right-16 top-36 h-10 w-28 border-b border-r border-fuku-red/25" />
       <div className="relative">
         <h1 className="headline-condensed text-[54px] uppercase leading-[0.85] text-fuku-black">
-          FUKUOKA RANKING
+          {cms.heroTitle}
         </h1>
         <p className="mt-4 text-[16px] font-black leading-relaxed text-fuku-red">
-          みんなの“好き”で、福岡のランキングが変わる。
+          {cms.heroSubtitle}
         </p>
         <p className="mt-3 text-[13px] font-bold leading-relaxed text-fuku-black">
           カフェ、居酒屋、スーパー、駅、街、人。
@@ -325,14 +327,16 @@ function RankingHero() {
 function RankingCategoryTabs({
   selectedCategory,
   onSelect,
+  categories,
 }: {
   selectedCategory: CategoryId;
   onSelect: (category: CategoryId) => void;
+  categories: { id: CategoryId; label: string }[];
 }) {
   return (
     <div className="sticky top-[116px] z-30 border-b border-fuku-border bg-white px-4 py-4">
       <div className="grid grid-cols-5 overflow-hidden rounded-full border border-fuku-border bg-white shadow-soft">
-        {rankingCategories.map((category) => (
+        {categories.map((category) => (
           <button
             key={category.id}
             type="button"
@@ -577,11 +581,21 @@ function RankingThemeRequest() {
 
 export default function RankingPage() {
   const searchParams = useSearchParams();
+  const [cms, setCms] = useState<RankingCmsData>(() => getDefaultRankingCmsData());
   const [selectedCategory, setSelectedCategory] = useState<CategoryId>("daily");
   const [selectedRanking, setSelectedRanking] = useState("supermarket");
   const themes = rankingThemes[selectedCategory];
   const selectedTheme = themes.find((theme) => theme.id === selectedRanking) ?? themes[0];
   const mode = searchParams.get("mode");
+
+  useEffect(() => {
+    const published = getPublishedRanking();
+    setCms(published);
+    if (rankingThemes[published.defaultTab as CategoryId]) {
+      setSelectedCategory(published.defaultTab as CategoryId);
+      setSelectedRanking(rankingThemes[published.defaultTab as CategoryId][0].id);
+    }
+  }, []);
 
   useEffect(() => {
     const category = searchParams.get("category") as CategoryId | null;
@@ -605,6 +619,11 @@ export default function RankingPage() {
     }
   }, [searchParams]);
 
+  const visibleCategories = cms.tabs
+    .filter((tab) => tab.isVisible && rankingThemes[tab.id as CategoryId])
+    .map((tab) => ({ id: tab.id as CategoryId, label: tab.label }));
+  const categoriesForTabs = visibleCategories.length ? visibleCategories : rankingCategories;
+
   function handleCategory(category: CategoryId) {
     setSelectedCategory(category);
     setSelectedRanking(rankingThemes[category][0].id);
@@ -614,8 +633,8 @@ export default function RankingPage() {
     <div className="mx-auto min-h-screen max-w-[430px] bg-white shadow-phone">
       <Header />
       <main>
-        <RankingHero />
-        <RankingCategoryTabs selectedCategory={selectedCategory} onSelect={handleCategory} />
+        <RankingHero cms={cms} />
+        <RankingCategoryTabs selectedCategory={selectedCategory} onSelect={handleCategory} categories={categoriesForTabs} />
         {mode === "vote" ? <VoteModePanel themes={themes} onSelect={setSelectedRanking} /> : null}
         <PickupRankingThemes
           themes={themes}

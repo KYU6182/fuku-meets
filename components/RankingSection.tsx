@@ -8,6 +8,15 @@ import {
   Train,
 } from "lucide-react";
 import FukuVoteBanner from "./FukuVoteBanner";
+type LegacyRankingCms = {
+  title?: string;
+  subtitle?: string;
+  description?: string;
+  visibleThemeIds?: string[];
+  ctaText?: string;
+  ctaHref?: string;
+  isVisible?: boolean;
+};
 
 type Category = {
   label: string;
@@ -36,6 +45,7 @@ type RankingSectionProps = {
   rankingCategories: Category[];
   cafeRanking: CafeRankingItem[];
   dailyRanking: DailyRankingGroup[];
+  cms?: LegacyRankingCms;
 };
 
 type DailyRankingItem = {
@@ -46,6 +56,7 @@ type DailyRankingItem = {
 };
 
 type DailyRankingBlockData = {
+  id: string;
   title: string;
   description: string;
   icon: LucideIcon;
@@ -55,6 +66,7 @@ type DailyRankingBlockData = {
 
 const dailyRankingBlocks: DailyRankingBlockData[] = [
   {
+    id: "supermarket",
     title: "好きなスーパー",
     description: "日常の味方！通いやすくて、品ぞろえも◎",
     icon: ShoppingBasket,
@@ -81,6 +93,7 @@ const dailyRankingBlocks: DailyRankingBlockData[] = [
     ],
   },
   {
+    id: "station",
     title: "好きな駅",
     description: "通勤・通学も、おでかけも。よく使う駅はここ！",
     icon: Train,
@@ -107,6 +120,7 @@ const dailyRankingBlocks: DailyRankingBlockData[] = [
     ],
   },
   {
+    id: "city",
     title: "住みたい街",
     description: "住むならこんな街に暮らしたい！",
     icon: Home,
@@ -133,6 +147,7 @@ const dailyRankingBlocks: DailyRankingBlockData[] = [
     ],
   },
   {
+    id: "late-night",
     title: "深夜助かる場所",
     description: "遅くなった日も、ここがあると安心。",
     icon: Moon,
@@ -300,7 +315,14 @@ function MiniCategoryCard({
   );
 }
 
-export default function RankingSection(_props: RankingSectionProps) {
+export default function RankingSection({ cms }: RankingSectionProps) {
+  if (cms?.isVisible === false) return null;
+  const visibleThemeIds = cms?.visibleThemeIds ?? [];
+  const visibleBlocks = visibleThemeIds.length
+    ? dailyRankingBlocks.filter((block) => visibleThemeIds.includes(block.id))
+    : dailyRankingBlocks;
+  const titleParts = (cms?.title ?? "FUKUOKA RANKING").split(/\s+/).filter(Boolean);
+
   return (
     <section className="mt-8 border-y border-[#eeeeee] bg-white px-4 py-6">
       <div className="relative mb-6 overflow-hidden rounded-[12px] bg-white px-1 pb-2 pt-1">
@@ -309,20 +331,25 @@ export default function RankingSection(_props: RankingSectionProps) {
         <div className="absolute right-12 top-12 h-12 w-16 border-b border-r border-[#d8d5cf]" />
         <div className="relative">
           <h2 className="headline-condensed text-[42px] font-black uppercase leading-[0.9] text-[#111111]">
-            <span className="block">FUKUOKA</span>
-            <span className="block">RANKING</span>
+            {titleParts.length > 1 ? (
+              titleParts.map((part) => (
+                <span key={part} className="block">{part}</span>
+              ))
+            ) : (
+              <span className="block">{cms?.title ?? "FUKUOKA RANKING"}</span>
+            )}
           </h2>
           <p className="mt-7 text-[14px] font-black leading-relaxed text-fuku-black">
-            みんなの“いつもの福岡”ランキング
+            {cms?.subtitle ?? "みんなの“いつもの福岡”ランキング"}
           </p>
           <p className="mt-2 max-w-[300px] text-[12px] font-semibold leading-relaxed text-fuku-gray">
-            暮らしの中で見つけた、リアルに助かる・通いたくなるお気に入りをシェアしよう。
+            {cms?.description ?? "暮らしの中で見つけた、リアルに助かる・通いたくなるお気に入りをシェアしよう。"}
           </p>
         </div>
       </div>
 
       <div>
-        {dailyRankingBlocks.map((block) => (
+        {visibleBlocks.map((block) => (
           <DailyRankingBlock key={block.title} block={block} />
         ))}
       </div>
@@ -331,10 +358,10 @@ export default function RankingSection(_props: RankingSectionProps) {
 
       <div className="pt-1 text-center">
         <a
-          href="/ranking"
+          href={cms?.ctaHref ?? "/ranking"}
           className="mx-auto mt-6 flex h-12 w-4/5 items-center justify-center gap-3 rounded-full bg-fuku-red px-5 text-[15px] font-black tracking-wide text-white"
         >
-          ランキングページへ
+          {cms?.ctaText ?? "ランキングページへ"}
           <ArrowRight size={18} />
         </a>
         <p className="mt-3 text-[13px] font-black text-fuku-black">

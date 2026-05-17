@@ -90,7 +90,7 @@ export default function SearchPage() {
           </div>
         </section>
       </main>
-      <BottomNav active="search" />
+      <BottomNav active="home" />
     </div>
   );
 }

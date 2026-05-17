@@ -1,5 +1,13 @@
 import { CalendarPlus } from "lucide-react";
 import SectionHeader from "./SectionHeader";
+type LegacyPickupCms = {
+  title?: string;
+  subtitle?: string;
+  featuredNewsIds?: string[];
+  ctaText?: string;
+  ctaHref?: string;
+  isVisible?: boolean;
+};
 
 type PickupContent = {
   image: string;
@@ -10,9 +18,11 @@ type PickupContent = {
 
 type PickUpContentsSectionProps = {
   pickupContents: PickupContent[];
+  cms?: LegacyPickupCms;
 };
 
-export default function PickUpContentsSection({ pickupContents }: PickUpContentsSectionProps) {
+export default function PickUpContentsSection({ pickupContents, cms }: PickUpContentsSectionProps) {
+  if (cms?.isVisible === false) return null;
   const hrefs = [
     "/news/local-news-fukuoka-now",
     "/news/fukuoka-food-feature",
@@ -21,7 +31,7 @@ export default function PickUpContentsSection({ pickupContents }: PickUpContents
 
   return (
     <section className="bg-white px-5 py-8">
-      <SectionHeader title="PICK UP CONTENTS" actionLabel="すべて見る →" href="/news" />
+      <SectionHeader title={cms?.title ?? "PICK UP CONTENTS"} subtitle={cms?.subtitle} actionLabel={`${cms?.ctaText ?? "すべて見る"} →`} href={cms?.ctaHref ?? "/news"} />
       <div className="grid grid-cols-3 gap-3">
         {pickupContents.map((item, index) => (
           <a key={item.title} href={hrefs[index] ?? "/news"} className="min-w-0">

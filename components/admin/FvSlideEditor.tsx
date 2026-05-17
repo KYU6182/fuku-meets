@@ -36,8 +36,8 @@ export default function FvSlideEditor({
             自動スライド
             <input type="checkbox" checked={hero.autoplay} onChange={(event) => onHeroChange({ autoplay: event.target.checked })} />
           </label>
-          <AdminFormField label="切り替え間隔(ms)" type="number" value={String(hero.intervalMs)} onChange={(value) => onHeroChange({ intervalMs: Number(value) || 4500 })} />
-          <AdminFormField label="高さ" type="select" value={hero.height} options={["compact", "standard", "large"]} onChange={(value) => onHeroChange({ height: value as HomeCmsData["hero"]["height"] })} />
+          <AdminFormField testId="studio-hero-interval" label="切り替え間隔(ms)" type="number" value={String(hero.intervalMs)} onChange={(value) => onHeroChange({ intervalMs: Number(value) || 4500 })} />
+          <AdminFormField testId="studio-hero-height" label="高さ" type="select" value={hero.height} options={["compact", "standard", "large"]} onChange={(value) => onHeroChange({ height: value as HomeCmsData["hero"]["height"] })} />
         </div>
       </div>
 
@@ -68,11 +68,11 @@ export default function FvSlideEditor({
           </button>
         </div>
         <div className="space-y-4">
-          <AdminFormField label="ラベル" value={slide.label} onChange={(value) => onSlideChange(activeIndex, { label: value })} />
-          <AdminFormField label="タイトル" type="textarea" value={slide.title} onChange={(value) => onSlideChange(activeIndex, { title: value })} />
-          <AdminFormField label="サブコピー" type="textarea" value={slide.subtitle} onChange={(value) => onSlideChange(activeIndex, { subtitle: value })} />
-          <AdminFormField label="CTAテキスト" value={slide.ctaText} onChange={(value) => onSlideChange(activeIndex, { ctaText: value })} />
-          <AdminFormField label="CTAリンク" value={slide.ctaHref} onChange={(value) => onSlideChange(activeIndex, { ctaHref: value })} />
+          <AdminFormField testId="studio-hero-label" label="ラベル" value={slide.label} onChange={(value) => onSlideChange(activeIndex, { label: value })} />
+          <AdminFormField testId="studio-hero-title" label="タイトル" type="textarea" value={slide.title} onChange={(value) => onSlideChange(activeIndex, { title: value })} />
+          <AdminFormField testId="studio-hero-subtitle" label="サブコピー" type="textarea" value={slide.subtitle} onChange={(value) => onSlideChange(activeIndex, { subtitle: value })} />
+          <AdminFormField testId="studio-hero-cta-text" label="CTAテキスト" value={slide.ctaText} onChange={(value) => onSlideChange(activeIndex, { ctaText: value })} />
+          <AdminFormField testId="studio-hero-cta-href" label="CTAリンク" value={slide.ctaHref} onChange={(value) => onSlideChange(activeIndex, { ctaHref: value })} />
           <DirectImageUploader value={slide.image} onSelect={(url) => onSlideChange(activeIndex, { image: url })} />
         </div>
       </div>

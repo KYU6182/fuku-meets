@@ -21,6 +21,13 @@ import {
 import { useMemo, useState } from "react";
 import SectionHeader from "./SectionHeader";
 import { spots } from "@/lib/data/spots";
+type LegacyWeekendCms = {
+  title?: string;
+  subtitle?: string;
+  defaultCategory?: string;
+  visibleCategoryIds?: string[];
+  isVisible?: boolean;
+};
 
 type WeekendCategory = {
   label: string;
@@ -38,6 +45,7 @@ type WeekendSelect = {
 type WeekendGuideSectionProps = {
   weekendCategories: WeekendCategory[];
   weekendSelects: WeekendSelect[];
+  cms?: LegacyWeekendCms;
 };
 
 type WeekendGuideKey =
@@ -644,8 +652,15 @@ function ActionBar({ actions }: { actions: ActionItem[] }) {
   );
 }
 
-export default function WeekendGuideSection(_props: WeekendGuideSectionProps) {
-  const [selectedCategory, setSelectedCategory] = useState<WeekendGuideKey>("ramen");
+export default function WeekendGuideSection({ cms }: WeekendGuideSectionProps) {
+  const isHidden = cms?.isVisible === false;
+  const initialCategory = ((cms?.defaultCategory as WeekendGuideKey | undefined) ?? "ramen");
+  const safeInitialCategory = categoryOrder.includes(initialCategory) ? initialCategory : "ramen";
+  const visibleCategoryIds = cms?.visibleCategoryIds ?? [];
+  const visibleCategories = visibleCategoryIds.length
+    ? categoryOrder.filter((key) => visibleCategoryIds.includes(key))
+    : categoryOrder;
+  const [selectedCategory, setSelectedCategory] = useState<WeekendGuideKey>(safeInitialCategory);
   const [selectedMood, setSelectedMood] = useState("深夜営業");
   const [selectedArea, setSelectedArea] = useState("大名");
   const selectedGuide = weekendGuides[selectedCategory];
@@ -674,12 +689,14 @@ export default function WeekendGuideSection(_props: WeekendGuideSectionProps) {
     setSelectedArea(weekendGuides[key].areaTags[0]);
   }
 
+  if (isHidden) return null;
+
   return (
     <section className="bg-white px-5 py-10">
-      <SectionHeader title="WEEKEND GUIDE" subtitle="今週の気分で、福岡をめぐる。" />
+      <SectionHeader title={cms?.title ?? "WEEKEND GUIDE"} subtitle={cms?.subtitle ?? "今週の気分で、福岡をめぐる。"} />
 
       <div className="grid grid-cols-4 gap-2">
-        {categoryOrder.map((key) => (
+        {visibleCategories.map((key) => (
           <CategoryButton
             key={key}
             guideKey={key}

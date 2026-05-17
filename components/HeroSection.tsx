@@ -2,7 +2,7 @@
 
 import { ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { defaultHomeCmsData } from "@/lib/cms";
+import { getDefaultHomeCmsData } from "@/lib/cms";
 import type { HomeCmsData, HeroSlide } from "@/types/cms";
 
 const titleSizeClass: Record<HeroSlide["titleFontSize"], string> = {
@@ -36,26 +36,27 @@ const spacingClass: Record<NonNullable<HeroSlide["spacing"]>, string> = {
   spacious: "px-6 pb-9",
 };
 
-export default function HeroSection({ hero = defaultHomeCmsData.hero }: { hero?: HomeCmsData["hero"] }) {
-  const slides = useMemo(() => hero.slides.filter((slide) => slide.isVisible), [hero.slides]);
+export default function HeroSection({ cms, hero }: { cms?: HomeCmsData["hero"]; hero?: HomeCmsData["hero"] }) {
+  const resolvedHero = cms ?? hero ?? getDefaultHomeCmsData().hero;
+  const slides = useMemo(() => resolvedHero.slides.filter((slide) => slide.isVisible), [resolvedHero.slides]);
   const [activeIndex, setActiveIndex] = useState(0);
 
   useEffect(() => {
-    if (!hero.autoplay || slides.length <= 1) return;
+    if (!resolvedHero.autoplay || slides.length <= 1) return;
     const timer = window.setInterval(() => {
       setActiveIndex((current) => (current + 1) % slides.length);
-    }, Math.max(hero.intervalMs, 1200));
+    }, Math.max(resolvedHero.intervalMs, 1200));
     return () => window.clearInterval(timer);
-  }, [hero.autoplay, hero.intervalMs, slides.length]);
+  }, [resolvedHero.autoplay, resolvedHero.intervalMs, slides.length]);
 
   useEffect(() => {
     setActiveIndex(0);
   }, [slides.length]);
 
-  if (!hero.isVisible || slides.length === 0) return null;
+  if (!resolvedHero.isVisible || slides.length === 0) return null;
 
   const slide = slides[activeIndex] ?? slides[0];
-  const minHeight = heightClass[hero.height];
+  const minHeight = heightClass[resolvedHero.height];
   const alignment = slide.align === "center" ? "items-center text-center" : "items-start text-left";
   const justify = slide.align === "center" ? "justify-center" : "justify-end";
   const backgroundImage = slide.image
@@ -86,15 +87,26 @@ export default function HeroSection({ hero = defaultHomeCmsData.hero }: { hero?:
           <p className={`${subtitleSizeClass[slide.subtitleFontSize]} mt-3 max-w-[310px] whitespace-pre-line font-bold leading-relaxed`} style={{ color: slide.textColor }}>
             {slide.subtitle}
           </p>
-          <div className={`mt-5 flex w-full items-center gap-4 ${slide.align === "center" ? "justify-center" : "justify-between"}`}>
-            <a
-              href={slide.ctaHref}
-              className="inline-flex min-h-[46px] items-center gap-3 rounded-full px-5 text-[13px] font-black tracking-wide"
-              style={{ backgroundColor: slide.buttonColor, color: slide.buttonTextColor }}
-            >
-              {slide.ctaText}
-              <ArrowRight size={17} />
-            </a>
+          <div className={`mt-5 flex w-full flex-wrap items-center gap-3 ${slide.align === "center" ? "justify-center" : "justify-between"}`}>
+            <div className="flex flex-wrap gap-2">
+              <a
+                href={slide.ctaHref}
+                className="inline-flex min-h-[46px] items-center gap-3 rounded-full px-5 text-[13px] font-black tracking-wide"
+                style={{ backgroundColor: slide.buttonColor, color: slide.buttonTextColor }}
+              >
+                {slide.ctaText}
+                <ArrowRight size={17} />
+              </a>
+              {slide.id === "hero-1" ? (
+                <a
+                  href="/start-guide"
+                  className="inline-flex min-h-[46px] items-center gap-3 rounded-full border border-fuku-black bg-white px-5 text-[13px] font-black tracking-wide text-fuku-black"
+                >
+                  初めての方へ
+                  <ArrowRight size={17} />
+                </a>
+              ) : null}
+            </div>
             <p className="text-[13px] font-black tracking-widest" style={{ color: slide.textColor }}>
               {activeIndex + 1} / {slides.length}
             </p>

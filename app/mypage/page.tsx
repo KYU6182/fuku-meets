@@ -1,6 +1,6 @@
 "use client";
 
-import { Bookmark, Crown, Heart, Map, PenLine, UserRound } from "lucide-react";
+import { Bookmark, CalendarDays, Crown, Heart, Map, PenLine, UserRound } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import BottomNav from "@/components/BottomNav";
@@ -92,6 +92,7 @@ export default function MyPage() {
                 <LinkCard href="/mypage/votes" title="投票したランキング" description={`${stats.votes}件`} icon={<Crown size={20} />} />
                 <LinkCard href="/mypage/icons" title="応援中ICONS" description={`${stats.supports}件`} icon={<Heart size={20} />} />
                 <LinkCard href="/mypage/good" title="もらったGOOD" description={`${stats.goods}件`} icon={<PenLine size={20} />} />
+                <LinkCard href="/mypage/meets" title="参加予定MEET" description="興味あり・レビュー待ち" icon={<CalendarDays size={20} />} />
               </div>
               <LinkCard href="/mypage/dashboard" title="MY DASHBOARD" description="今週のアクションをまとめて確認" icon={<UserRound size={20} />} />
               <div className="rounded-[16px] border border-fuku-border bg-white p-5">

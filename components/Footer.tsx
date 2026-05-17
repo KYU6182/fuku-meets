@@ -35,7 +35,7 @@ export default function Footer({ footerLinks }: FooterProps) {
           福岡のリアルに、会いにいく。
         </p>
         <p className="mt-7 text-[13px] font-bold leading-[2] text-fuku-black">
-          FUKU-MEETSは、福岡の人・店・街・イベントを、投票とランキングで楽しむ参加型ローカルメディアです。
+          FUKU-MEETSは、福岡の“好き”を見つけて、リアルに会いにいく参加型ローカルプラットフォームです。
         </p>
         <div className="mt-7 h-[92px] rounded-[10px] border border-fuku-border bg-[linear-gradient(180deg,#fff,#f2eee8)]" />
       </div>

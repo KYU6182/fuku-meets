@@ -1,7 +1,6 @@
-import { ArrowRight, HeartHandshake, Sparkles, Vote } from "lucide-react";
+import { ArrowRight, Bookmark, Heart, MapPin, Sparkles, UserPlus, Users, Vote } from "lucide-react";
 import ActionCard from "./ActionCard";
-import IconPersonCard from "./IconPersonCard";
-import SectionHeader from "./SectionHeader";
+import type { HomeCmsData } from "@/types/cms";
 
 type IconData = {
   rank: number;
@@ -13,44 +12,107 @@ type IconData = {
 
 type FukuIconsSectionProps = {
   iconsData: IconData[];
+  cms?: HomeCmsData["fukuIcons"];
 };
 
-export default function FukuIconsSection({ iconsData }: FukuIconsSectionProps) {
-  return (
-    <section className="mt-8 border-y border-fuku-border bg-white px-5 py-7">
-      <SectionHeader
-        title="FUKU ICONS / PEOPLE"
-        subtitle="福岡をつくる、注目のアイコンたち。"
-        actionLabel="すべて見る →"
-        href="/icons"
-      />
+const defaultRanking = [
+  { rank: 1, name: "YUI", genre: "model / creator", area: "天神エリア", votes: "2,430票", image: "/images/icons/yui.jpg", href: "/icons/yui" },
+  { rank: 2, name: "RENA", genre: "model", area: "大名エリア", votes: "1,982票", image: "/images/icons/rena.jpg", href: "/icons/rena" },
+  { rank: 3, name: "ANNA", genre: "model", area: "天神エリア", votes: "1,540票", image: "/images/icons/anna.jpg", href: "/icons/anna" },
+];
 
-      <div className="mb-6 grid grid-cols-3 gap-4">
-        {iconsData.map((person) => (
-          <IconPersonCard key={person.name} {...person} />
+const badgeClass: Record<number, string> = {
+  1: "bg-[#f5b400]",
+  2: "bg-[#9ca3af]",
+  3: "bg-[#c9824a]",
+};
+
+function SmallIconButton({ icon: Icon, label, href }: { icon: typeof Heart; label: string; href: string }) {
+  return (
+    <a href={href} className="grid min-w-0 place-items-center gap-1 rounded-[10px] border border-fuku-border bg-white px-1 py-2 text-[8px] font-black text-fuku-black">
+      <Icon size={15} />
+      <span className="leading-none">{label}</span>
+    </a>
+  );
+}
+
+export default function FukuIconsSection({ cms }: FukuIconsSectionProps) {
+  if (cms?.isVisible === false) return null;
+
+  return (
+    <section className="mt-8 border-y border-fuku-border bg-white px-5 py-8">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="headline-condensed text-[38px] uppercase leading-none text-fuku-black">{cms?.title ?? "FUKU ICONS"}</p>
+          <p className="mt-2 text-[14px] font-black text-fuku-black">{cms?.subtitle ?? "福岡をつくる、注目のアイコンたち。"}</p>
+        </div>
+        <a href={cms?.ctaHref ?? "/icons"} className="mt-2 shrink-0 text-[12px] font-black text-fuku-black">すべて見る →</a>
+      </div>
+
+      <article className="mt-5 overflow-hidden rounded-[16px] border border-fuku-border bg-white p-4 shadow-soft">
+        <div className="flex items-center gap-2">
+          <p className="headline-condensed text-[24px] uppercase leading-none text-fuku-black">WEEKLY ICON</p>
+          <span className="rounded-full border border-fuku-red px-2 py-1 text-[10px] font-black text-fuku-red">今週の注目アイコン</span>
+        </div>
+        <div className="mt-4 grid gap-4 min-[390px]:grid-cols-[150px_1fr]">
+          <a href="/icons/yui" className="block aspect-[4/3] rounded-[12px] bg-fuku-light bg-cover bg-center" style={{ backgroundImage: "url('/images/icons/yui.jpg')" }} />
+          <div>
+            <div className="flex items-start justify-between gap-2">
+              <div>
+                <h3 className="headline-condensed text-[42px] uppercase leading-none text-fuku-black">YUI</h3>
+                <p className="mt-1 text-[12px] font-black text-fuku-gray">model / creator</p>
+              </div>
+              <span className="rounded-full bg-[#efe7df] px-4 py-2 text-[11px] font-black text-fuku-black">RANK 1</span>
+            </div>
+            <p className="mt-3 text-[13px] font-black leading-relaxed text-fuku-black">
+              福岡から全国へ。
+              <br />
+              いま注目したい次世代アイコン。
+            </p>
+            <div className="mt-4 grid grid-cols-3 gap-2 text-[10px] font-black text-fuku-black">
+              <span className="inline-flex items-center gap-1"><MapPin size={14} /> 天神</span>
+              <span className="text-fuku-red">注目度<br />98.7%</span>
+              <span>投票数<br />2,430</span>
+            </div>
+            <div className="mt-4 grid grid-cols-2 gap-2">
+              <a href="/icons/yui" className="flex min-h-[42px] items-center justify-center rounded-[9px] bg-fuku-red text-[12px] font-black text-white">プロフィールを見る</a>
+              <a href="/icons/yui" className="flex min-h-[42px] items-center justify-center gap-2 rounded-[9px] border border-fuku-red text-[12px] font-black text-fuku-red">
+                <Heart size={16} />
+                応援する
+              </a>
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <div className="mt-6 flex items-center justify-between">
+        <h3 className="headline-condensed text-[28px] uppercase leading-none text-fuku-black">ICONS RANKING</h3>
+        <a href="/icons/all" className="text-[11px] font-black text-fuku-black">すべて見る →</a>
+      </div>
+      <div className="mt-3 grid grid-cols-3 gap-2">
+        {defaultRanking.map((person) => (
+          <article key={person.name} className="relative rounded-[12px] border border-fuku-border bg-white p-2 text-center shadow-soft">
+            <span className={`absolute left-2 top-2 grid h-6 w-6 place-items-center rounded-[5px] text-[12px] font-black text-white ${badgeClass[person.rank]}`}>
+              {person.rank}
+            </span>
+            <a href={person.href} className="mx-auto mt-2 block h-16 w-16 rounded-full bg-fuku-light bg-cover bg-center" style={{ backgroundImage: `url('${person.image}')` }} />
+            <a href={person.href} className="mt-2 block text-[14px] font-black leading-none text-fuku-black">{person.name}</a>
+            <p className="mt-1 text-[9px] font-black leading-tight text-fuku-gray">{person.genre}</p>
+            <p className="mt-1 text-[9px] font-black text-fuku-gray">{person.area}</p>
+            <p className="mt-1 text-[10px] font-black text-fuku-black">{person.votes}</p>
+            <div className="mt-2 grid grid-cols-3 gap-1">
+              <SmallIconButton icon={UserPlus} label="フォロー" href={person.href} />
+              <SmallIconButton icon={Bookmark} label="保存" href={person.href} />
+              <SmallIconButton icon={Heart} label="応援" href={person.href} />
+            </div>
+          </article>
         ))}
       </div>
 
-      <a
-        href="/icons"
-        className="flex min-h-[92px] items-center gap-4 rounded-[10px] border border-fuku-border bg-white p-3 shadow-soft"
-      >
-        <div className="flex w-[88px] shrink-0 -space-x-8">
-          {iconsData.map((person) => (
-            <div
-              key={person.name}
-              className="h-[58px] w-[58px] rounded-[6px] border-2 border-white bg-fuku-light bg-cover bg-center"
-              style={{ backgroundImage: `url('${person.image}')` }}
-            />
-          ))}
-        </div>
+      <a href={cms?.ctaHref ?? "/icons"} className="mt-5 flex min-h-[88px] items-center gap-4 rounded-[12px] border border-fuku-border bg-[#fbfaf7] p-4 shadow-soft">
         <div className="min-w-0 flex-1">
-          <p className="headline-condensed text-[22px] uppercase leading-none text-fuku-black">
-            FUKU ICONSを見る
-          </p>
-          <p className="mt-2 text-[12px] font-bold leading-relaxed text-fuku-gray">
-            福岡で輝くアイコンたちのインタビューや特集をチェック。
-          </p>
+          <p className="headline-condensed text-[24px] uppercase leading-none text-fuku-black">{cms?.ctaText ?? "FUKU ICONSを見る"}</p>
+          <p className="mt-2 text-[12px] font-bold leading-relaxed text-fuku-gray">{cms?.description ?? "福岡で輝くアイコンたちのインタビューや特集をチェック。"}</p>
         </div>
         <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-fuku-black">
           <ArrowRight size={18} />
@@ -59,7 +121,7 @@ export default function FukuIconsSection({ iconsData }: FukuIconsSectionProps) {
 
       <div className="mt-4 grid grid-cols-3 gap-2">
         <ActionCard icon={Sparkles} title="一般エントリー" caption="自分で応募" href="/forms/icon-entry" />
-        <ActionCard icon={HeartHandshake} title="推しを推薦" caption="友だちを推す" href="/forms/icon-recommend" />
+        <ActionCard icon={Users} title="推しを推薦" caption="友だちを推す" href="/forms/icon-recommend" />
         <ActionCard icon={Vote} title="表紙投票" caption="次号を選ぶ" href="/icons/cover-vote" />
       </div>
     </section>

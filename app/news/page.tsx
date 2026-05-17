@@ -1,24 +1,30 @@
 "use client";
 
 import { CalendarPlus } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import BottomNav from "@/components/BottomNav";
 import Button from "@/components/Button";
 import Header from "@/components/Header";
 import PageHero from "@/components/PageHero";
+import { getDefaultNewsCmsData, getPublishedNews } from "@/lib/cms";
 import { newsArticles } from "@/lib/data/news";
 
-const tabs = ["すべて", "ローカルニュース", "イベント", "新店舗", "FUKU ICONS", "グルメ", "カルチャー"];
-
 export default function NewsPage() {
+  const [cms, setCms] = useState(() => getDefaultNewsCmsData());
   const [tab, setTab] = useState("すべて");
+  useEffect(() => {
+    const published = getPublishedNews();
+    setCms(published);
+    setTab(published.categories[0] ?? "すべて");
+  }, []);
+  const tabs = cms.categories.length ? cms.categories : getDefaultNewsCmsData().categories;
   const articles = tab === "すべて" ? newsArticles : newsArticles.filter((article) => article.category === tab);
 
   return (
     <div className="mx-auto min-h-screen max-w-[430px] bg-fuku-bg shadow-phone">
       <Header />
       <main className="pb-28">
-        <PageHero title="NEWS" copy="福岡の“いま”を見逃さない。" />
+        <PageHero title={cms.title} copy={cms.subtitle} />
         <section className="px-4 py-5">
           <div className="no-scrollbar flex gap-2 overflow-x-auto">
             {tabs.map((item) => (

@@ -18,8 +18,10 @@ import BottomNav from "./BottomNav";
 import Header from "./Header";
 import { addToLocalList, useToast } from "./Toast";
 import IconActionButtons from "./IconActionButtons";
+import { getDefaultIconsCmsData, getPublishedIcons } from "@/lib/cms";
 import { supportIcon } from "@/lib/iconVoteSystem";
 import { storageKeys } from "@/lib/storageKeys";
+import type { IconsCmsData } from "@/types/cms";
 
 type IconPerson = {
   rank: number;
@@ -212,19 +214,17 @@ function showGlobalToast(message: string) {
   window.dispatchEvent(new CustomEvent("fuku-toast", { detail: message }));
 }
 
-function IconsHero() {
+function IconsHero({ cms }: { cms: IconsCmsData }) {
   return (
     <section className="border-b border-fuku-border bg-white px-5 py-8">
       <h1 className="headline-condensed text-[58px] uppercase leading-[0.9] text-fuku-black">
-        FUKU ICONS
+        {cms.title}
       </h1>
       <p className="mt-4 text-[17px] font-black leading-relaxed text-fuku-black">
-        福岡をつくる、注目のアイコンたち。
+        {cms.subtitle}
       </p>
       <p className="mt-4 max-w-[350px] text-[13px] font-bold leading-relaxed text-fuku-black">
-        モデル、美容師、DJ、アーティスト、クリエイター。
-        <br />
-        福岡で活動する“気になる人”を見つけて、応援しよう。
+        {cms.heroDescription}
       </p>
     </section>
   );
@@ -492,7 +492,7 @@ function IconsSpotSection() {
   );
 }
 
-function IconsEntryCta() {
+function IconsEntryCta({ cms }: { cms: IconsCmsData }) {
   return (
     <section className="grid gap-3 bg-white px-4 py-5">
       <article className="relative overflow-hidden rounded-[14px] border border-[#f5caca] bg-white p-4">
@@ -510,7 +510,7 @@ function IconsEntryCta() {
           href="/forms/icon-entry"
           className="mt-4 flex min-h-[42px] w-full items-center justify-center gap-2 rounded-[8px] bg-fuku-red text-[12px] font-black text-white"
         >
-          一般エントリーする
+          {cms.entryCtaText}
           <ArrowRight size={15} />
         </a>
       </article>
@@ -529,7 +529,7 @@ function IconsEntryCta() {
           href="/forms/icon-recommend"
           className="mt-4 flex min-h-[42px] w-full items-center justify-center gap-2 rounded-[8px] border border-fuku-red bg-white text-[12px] font-black text-fuku-red"
         >
-          推しを推薦する
+          {cms.recommendCtaText}
           <ArrowRight size={15} />
         </a>
       </article>
@@ -563,7 +563,11 @@ function IconCommentsSection() {
 }
 
 export default function IconsPage() {
+  const [cms, setCms] = useState<IconsCmsData>(() => getDefaultIconsCmsData());
   const [selectedCategory, setSelectedCategory] = useState("すべて");
+  useEffect(() => {
+    setCms(getPublishedIcons());
+  }, []);
   const filteredPeople = useMemo(() => {
     if (selectedCategory === "すべて") return iconsRanking;
     return iconsRanking
@@ -576,13 +580,13 @@ export default function IconsPage() {
     <div className="mx-auto min-h-screen max-w-[430px] bg-white shadow-phone">
       <Header />
       <main>
-        <IconsHero />
+        <IconsHero cms={cms} />
         <WeeklyIconCard />
         <IconCategoryTabs selectedCategory={selectedCategory} onSelect={setSelectedCategory} />
         <IconsRanking people={visiblePeople} />
         <NewFaceSection />
         <IconsSpotSection />
-        <IconsEntryCta />
+        <IconsEntryCta cms={cms} />
         <IconCommentsSection />
       </main>
       <BottomNav active="home" />
