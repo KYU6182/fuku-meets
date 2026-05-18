@@ -39,6 +39,14 @@ export async function POST(request: Request) {
         title: content.title,
         status: content.status,
         image: content.image,
+        image_url: content.image,
+        hero_image_url: content.heroImage ?? content.image,
+        gallery_images: content.galleryImages ?? [],
+        related_news_ids: content.relatedNewsIds ?? [],
+        related_live_ids: content.relatedLiveIds ?? [],
+        detail_venue_name: content.detailVenueName ?? "",
+        is_age20_only: content.isAge20Only ?? false,
+        is_women_friendly: content.isWomenFriendly ?? false,
         area: content.area,
         date: content.date,
         start_time: content.startTime,
@@ -56,4 +64,3 @@ export async function POST(request: Request) {
   if (error) return Response.json({ error: error.message }, { status: 500 });
   return Response.json({ community: data.content as CommunityMeet, source: "supabase" });
 }
-

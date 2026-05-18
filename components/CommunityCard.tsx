@@ -4,12 +4,13 @@ import CommunityParticipantAvatars from "./CommunityParticipantAvatars";
 import type { CommunityMeet } from "@/types/communityMeet";
 
 export default function CommunityCard({ community }: { community: CommunityMeet }) {
+  const image = community.image || "/images/meet/creep-live.jpg";
   return (
     <article className="grid grid-cols-[118px_1fr_82px] overflow-hidden rounded-[14px] border border-fuku-border bg-white shadow-soft">
       <a
         href={`/meet/${community.slug}`}
         className="relative min-h-[128px] bg-fuku-light bg-cover bg-center"
-        style={{ backgroundImage: `linear-gradient(180deg,rgba(0,0,0,.03),rgba(0,0,0,.22)),url('${community.image}')` }}
+        style={{ backgroundImage: `linear-gradient(180deg,rgba(0,0,0,.03),rgba(0,0,0,.22)),url('${image}')` }}
       >
         <span className="absolute left-2 top-2 rounded-[5px] bg-fuku-black px-2 py-1 text-[10px] font-black text-white">{community.category}</span>
       </a>

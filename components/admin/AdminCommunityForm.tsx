@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import AdminLayout from "./AdminLayout";
 import AdminFormField from "./AdminFormField";
+import AdminImagePicker from "./AdminImagePicker";
 import { defaultCommunities, getAdminCommunitiesAsync, saveAdminCommunityAsync } from "@/lib/communityMeet";
 import type { CommunityMeet } from "@/types/communityMeet";
 
@@ -13,8 +14,10 @@ type CommunityFormState = Pick<
   | "title"
   | "category"
   | "image"
+  | "heroImage"
   | "area"
   | "venueName"
+  | "detailVenueName"
   | "date"
   | "startTime"
   | "endTime"
@@ -30,6 +33,8 @@ type CommunityFormState = Pick<
   noticesText: string;
   isSoloFriendly: boolean;
   isWomenOnly: boolean;
+  isWomenFriendly: boolean;
+  isAge20Only: boolean;
   isBeginnerFriendly: boolean;
   isVerifiedOnly: boolean;
 };
@@ -45,8 +50,10 @@ function toFormState(item?: CommunityMeet): CommunityFormState {
     title: item?.title ?? "",
     category: source.category,
     image: source.image,
+    heroImage: source.heroImage ?? source.image,
     area: source.area,
     venueName: source.venueName,
+    detailVenueName: source.detailVenueName ?? "",
     date: source.date,
     startTime: source.startTime,
     endTime: source.endTime,
@@ -61,6 +68,8 @@ function toFormState(item?: CommunityMeet): CommunityFormState {
     noticesText: source.notices?.join("\n") ?? "",
     isSoloFriendly: source.isSoloFriendly,
     isWomenOnly: source.isWomenOnly,
+    isWomenFriendly: source.isWomenFriendly ?? !source.isWomenOnly,
+    isAge20Only: source.isAge20Only ?? false,
     isBeginnerFriendly: source.isBeginnerFriendly,
     isVerifiedOnly: source.isVerifiedOnly,
   };
@@ -118,6 +127,8 @@ export default function AdminCommunityForm({ mode }: { mode: "new" | "edit" }) {
         fee: 800,
         isSoloFriendly: form.isSoloFriendly,
         isWomenOnly: form.isWomenOnly,
+        isWomenFriendly: form.isWomenFriendly,
+        isAge20Only: form.isAge20Only,
         isBeginnerFriendly: form.isBeginnerFriendly,
         isVerifiedOnly: form.isVerifiedOnly,
         updatedAt: now,
@@ -139,9 +150,9 @@ export default function AdminCommunityForm({ mode }: { mode: "new" | "edit" }) {
           <AdminFormField label="タイトル" value={form.title} onChange={(value) => setField("title", value)} placeholder="クリープハイプ飲み会" />
           <AdminFormField label="スラッグ" value={form.slug} onChange={(value) => setField("slug", slugify(value))} placeholder={previewSlug} />
           <AdminFormField label="カテゴリ" value={form.category} onChange={(value) => setField("category", value)} placeholder="音楽・ライブ" />
-          <AdminFormField label="画像URL" value={form.image} onChange={(value) => setField("image", value)} placeholder="/images/meet/creep-live.jpg" />
           <AdminFormField label="エリア" value={form.area} onChange={(value) => setField("area", value)} placeholder="天神" />
           <AdminFormField label="集合場所" value={form.venueName} onChange={(value) => setField("venueName", value)} placeholder="参加者にのみ共有" />
+          <AdminFormField label="参加確定者だけに表示する詳細場所" value={form.detailVenueName ?? ""} onChange={(value) => setField("detailVenueName", value)} placeholder="店舗名・住所など" />
           <AdminFormField label="開催日" type="date" value={form.date} onChange={(value) => setField("date", value)} />
           <AdminFormField label="開始時間" value={form.startTime} onChange={(value) => setField("startTime", value)} placeholder="21:30" />
           <AdminFormField label="終了時間" value={form.endTime} onChange={(value) => setField("endTime", value)} placeholder="24:30" />
@@ -153,6 +164,23 @@ export default function AdminCommunityForm({ mode }: { mode: "new" | "edit" }) {
           <AdminFormField label="ステータス" type="select" value={form.status} onChange={(value) => setField("status", value as CommunityMeet["status"])} options={["draft", "published", "closed", "archived"]} />
         </div>
 
+        <div className="grid gap-4 lg:grid-cols-2">
+          <AdminImagePicker
+            label="サムネ画像"
+            category="shop"
+            value={form.image}
+            onChange={(url) => setField("image", url)}
+            helpText="HOME / TONIGHT IN FUKUOKA、/meet 一覧カードに表示されます。"
+          />
+          <AdminImagePicker
+            label="詳細ページメイン画像"
+            category="shop"
+            value={form.heroImage ?? form.image}
+            onChange={(url) => setField("heroImage", url)}
+            helpText="/meet/[slug] のメインビジュアルに表示されます。"
+          />
+        </div>
+
         <AdminFormField label="説明文" type="textarea" value={form.description} onChange={(value) => setField("description", value)} placeholder="このMEETの説明" />
         <AdminFormField label="タグ（/ 区切り）" value={form.tagsText} onChange={(value) => setField("tagsText", value)} placeholder="一人参加OK / 男女ペアOK / 20代中心" />
         <AdminFormField label="注意事項・キャンセル規定（改行区切り）" type="textarea" value={form.noticesText} onChange={(value) => setField("noticesText", value)} />
@@ -160,7 +188,9 @@ export default function AdminCommunityForm({ mode }: { mode: "new" | "edit" }) {
         <div className="grid gap-2 rounded-[12px] border border-fuku-border p-4 text-[13px] font-bold sm:grid-cols-2">
           {[
             ["isSoloFriendly", "一人参加OK"],
+            ["isWomenFriendly", "女性参加あり"],
             ["isWomenOnly", "女性限定"],
+            ["isAge20Only", "20歳以上限定"],
             ["isBeginnerFriendly", "初心者歓迎"],
             ["isVerifiedOnly", "本人確認推奨"],
           ].map(([key, label]) => (

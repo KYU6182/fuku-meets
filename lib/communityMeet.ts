@@ -351,9 +351,9 @@ export async function getPublishedCommunitiesAsync() {
     const response = await fetch("/api/meets", { cache: "no-store" });
     if (!response.ok) throw new Error("Failed to load communities");
     const data = (await response.json()) as MeetApiList;
-    return data.communities?.length ? data.communities : getCommunities().filter((item) => item.status === "published");
+    return data.communities?.length ? data.communities : defaultCommunities.filter((item) => item.status === "published");
   } catch {
-    return getCommunities().filter((item) => item.status === "published");
+    return defaultCommunities.filter((item) => item.status === "published");
   }
 }
 
@@ -363,9 +363,9 @@ export async function getCommunityBySlugAsync(slug: string) {
     const response = await fetch(`/api/meets/${encodeURIComponent(slug)}`, { cache: "no-store" });
     if (!response.ok) throw new Error("Failed to load community");
     const data = (await response.json()) as MeetApiDetail;
-    return data.community ?? getCommunityBySlug(slug);
+    return data.community ?? defaultCommunities.find((item) => item.slug === slug || item.id === slug);
   } catch {
-    return getCommunityBySlug(slug);
+    return defaultCommunities.find((item) => item.slug === slug || item.id === slug);
   }
 }
 

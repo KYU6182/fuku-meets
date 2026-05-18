@@ -4,8 +4,11 @@ export type CommunityMeet = {
   title: string;
   category: string;
   image: string;
+  heroImage?: string;
+  galleryImages?: string[];
   area: string;
   venueName: string;
+  detailVenueName?: string;
   venueVisibility: "public" | "participants_only";
   date: string;
   startTime: string;
@@ -13,7 +16,6 @@ export type CommunityMeet = {
   description: string;
   tags: string[];
   fee?: number;
-  galleryImages?: string[];
   notices?: string[];
   capacity: number;
   participantCount: number;
@@ -22,8 +24,12 @@ export type CommunityMeet = {
   ageRange: string;
   isSoloFriendly: boolean;
   isWomenOnly: boolean;
+  isWomenFriendly?: boolean;
+  isAge20Only?: boolean;
   isBeginnerFriendly: boolean;
   isVerifiedOnly: boolean;
+  relatedNewsIds?: string[];
+  relatedLiveIds?: string[];
   hostId: string;
   hostName: string;
   hostAvatar: string;

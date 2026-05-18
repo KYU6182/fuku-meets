@@ -18,7 +18,7 @@ export async function GET(request: Request) {
 
   const { data, error } = await supabase
     .from("cms_assets")
-    .select("id,url,name,alt,category,created_at")
+    .select("id,url,name,alt,category,bucket,path,created_at")
     .order("created_at", { ascending: false });
 
   if (error) return Response.json({ images: [], source: "fallback", error: error.message });
@@ -29,6 +29,8 @@ export async function GET(request: Request) {
     name: String(item.name ?? "CMS image"),
     alt: String(item.alt ?? ""),
     category: item.category as CmsImage["category"],
+    bucket: String(item.bucket ?? ""),
+    path: String(item.path ?? ""),
     createdAt: String(item.created_at),
   }));
   return Response.json({ images, source: "supabase" });
@@ -85,9 +87,11 @@ export async function POST(request: Request) {
     name: String(data.name ?? name),
     alt: String(data.alt ?? alt),
     category: data.category as CmsImage["category"],
+    bucket,
+    path,
     createdAt: String(data.created_at),
   };
-  return Response.json({ image, source: "supabase" });
+  return Response.json({ image, bucket, source: "supabase" });
 }
 
 export async function DELETE(request: Request) {

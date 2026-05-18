@@ -19,6 +19,7 @@ export default function CommunityDetailPage({ slug }: { slug: string }) {
       mounted = false;
     };
   }, [slug]);
+  const heroImage = community.heroImage || community.image || "/images/meet/creep-live.jpg";
   return (
     <div className="mx-auto min-h-screen max-w-[430px] bg-[#fbfaf7] shadow-phone">
       <Header />
@@ -30,7 +31,7 @@ export default function CommunityDetailPage({ slug }: { slug: string }) {
           </div>
           <div
             className="relative h-[214px] rounded-t-[16px] bg-fuku-light bg-cover bg-center"
-            style={{ backgroundImage: `linear-gradient(180deg,rgba(0,0,0,.04),rgba(0,0,0,.28)),url('${community.image}')` }}
+            style={{ backgroundImage: `linear-gradient(180deg,rgba(0,0,0,.04),rgba(0,0,0,.28)),url('${heroImage}')` }}
           >
             <span className="absolute left-4 top-4 rounded-[6px] bg-fuku-black px-3 py-2 text-[12px] font-black text-white">{community.category}</span>
           </div>

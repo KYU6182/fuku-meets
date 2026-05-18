@@ -4,6 +4,8 @@ export type CmsImage = {
   name: string;
   alt: string;
   category: "fv" | "banner" | "shop" | "icons" | "news" | "magazine" | "ranking" | "other";
+  bucket?: string;
+  path?: string;
   createdAt: string;
 };
 

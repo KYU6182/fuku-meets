@@ -1,4 +1,7 @@
+"use client";
+
 import { ArrowRight, Building2, Moon, ShoppingBasket, Train } from "lucide-react";
+import { useEffect, useState } from "react";
 import type { HomeCmsData } from "@/types/cms";
 
 type RankingEntry = {
@@ -16,6 +19,24 @@ type RankingTheme = {
   icon: typeof ShoppingBasket;
   href: string;
   entries: RankingEntry[];
+};
+
+type ApiRankingEntry = {
+  slug?: string;
+  name?: string;
+  votes?: number | string;
+  rank?: number;
+  image?: string;
+  thumbnailUrl?: string;
+};
+
+type ApiRankingTheme = {
+  id?: string;
+  slug?: string;
+  title?: string;
+  description?: string;
+  image?: string;
+  entries?: ApiRankingEntry[];
 };
 
 const rankingThemes: RankingTheme[] = [
@@ -69,6 +90,37 @@ const rankingThemes: RankingTheme[] = [
   },
 ];
 
+function iconForTheme(id: string) {
+  if (id.includes("station")) return Train;
+  if (id.includes("city") || id.includes("area")) return Building2;
+  if (id.includes("night")) return Moon;
+  return ShoppingBasket;
+}
+
+function normalizeThemes(items: ApiRankingTheme[]): RankingTheme[] {
+  if (!items.length) return rankingThemes;
+  return items
+    .filter((item) => item.title)
+    .slice(0, 4)
+    .map((theme) => {
+      const id = theme.slug || theme.id || "ranking";
+      return {
+        id,
+        title: theme.title || "ランキング",
+        description: theme.description || "みんなの“好き”を集めたランキング",
+        icon: iconForTheme(id),
+        href: `/ranking?theme=${encodeURIComponent(id)}`,
+        entries: (theme.entries ?? []).slice(0, 3).map((entry, index) => ({
+          rank: entry.rank || index + 1,
+          name: entry.name || `候補 ${index + 1}`,
+          votes: `${Number(entry.votes ?? 0).toLocaleString("ja-JP")}票`,
+          image: entry.image || entry.thumbnailUrl || "/images/ranking/super-bonrepas.jpg",
+          href: `/ranking/${id}/${entry.slug || entry.name || index + 1}`,
+        })),
+      };
+    });
+}
+
 const badgeClass: Record<number, string> = {
   1: "bg-[#f5b400]",
   2: "bg-[#9ca3af]",
@@ -95,6 +147,23 @@ function TopCard({ entry }: { entry: RankingEntry }) {
 }
 
 export default function RankingMeetSection({ cms }: { cms?: HomeCmsData["ranking"] }) {
+  const [themes, setThemes] = useState<RankingTheme[]>(rankingThemes);
+
+  useEffect(() => {
+    let mounted = true;
+    fetch("/api/content/rankings", { cache: "no-store" })
+      .then((response) => (response.ok ? response.json() : Promise.reject(new Error("failed"))))
+      .then((data: { items?: ApiRankingTheme[] }) => {
+        if (mounted && data.items?.length) setThemes(normalizeThemes(data.items));
+      })
+      .catch(() => {
+        if (mounted) setThemes(rankingThemes);
+      });
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
   if (cms?.isVisible === false) return null;
   return (
     <section className="mt-8 border-y border-[#eee] bg-white px-4 py-8">
@@ -103,7 +172,7 @@ export default function RankingMeetSection({ cms }: { cms?: HomeCmsData["ranking
       <p className="mt-2 text-[12px] font-bold leading-relaxed text-fuku-gray">{cms?.description ?? "暮らしの中で見つけた、リアルに助かる・通いたくなるお気に入りをシェアしよう。"}</p>
 
       <div className="mt-6 grid gap-3">
-        {rankingThemes.map((theme) => {
+        {themes.map((theme) => {
           const Icon = theme.icon;
           return (
             <article key={theme.id} className="rounded-[12px] border border-[#eadfd8] bg-white p-3 shadow-soft">

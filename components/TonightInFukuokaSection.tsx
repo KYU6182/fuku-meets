@@ -1,3 +1,5 @@
+"use client";
+
 import {
   ArrowRight,
   BadgeCheck,
@@ -11,9 +13,10 @@ import {
   Users,
   Wine,
 } from "lucide-react";
+import { useEffect, useState } from "react";
 import CommunityGenderRatio from "@/components/CommunityGenderRatio";
 import CommunityParticipantAvatars from "@/components/CommunityParticipantAvatars";
-import { getCommunities, meetCategories } from "@/lib/communityMeet";
+import { defaultCommunities, getPublishedCommunitiesAsync, meetCategories } from "@/lib/communityMeet";
 import type { HomeCmsData } from "@/types/cms";
 import type { CommunityMeet } from "@/types/communityMeet";
 
@@ -111,8 +114,19 @@ function CommunityListCard({ community }: { community: CommunityMeet }) {
 }
 
 export default function TonightInFukuokaSection({ cms }: { cms?: HomeCmsData["tonight"] }) {
+  const [communities, setCommunities] = useState(() => defaultCommunities.filter((community) => community.status === "published"));
+
+  useEffect(() => {
+    let mounted = true;
+    void getPublishedCommunitiesAsync().then((items) => {
+      if (mounted) setCommunities(items);
+    });
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
   if (cms?.isVisible === false) return null;
-  const communities = getCommunities().filter((community) => community.status === "published");
   const featured = communities.slice(0, 3);
   const listed = communities.slice(0, 5);
   const categoryIds = cms?.categoryIds?.length ? cms.categoryIds : requestedCategories;
