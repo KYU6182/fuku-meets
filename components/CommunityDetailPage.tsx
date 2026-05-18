@@ -1,13 +1,24 @@
+"use client";
+
 import { CalendarDays, MapPin, Share2, ShieldCheck, Star, Users } from "lucide-react";
+import { useEffect, useState } from "react";
 import BottomNav from "./BottomNav";
 import CommunityGenderRatio from "./CommunityGenderRatio";
 import CommunityJoinButton from "./CommunityJoinButton";
-import CommunityParticipantAvatars from "./CommunityParticipantAvatars";
 import Header from "./Header";
-import { getCommunities, getCommunityBySlug } from "@/lib/communityMeet";
+import { defaultCommunities, getCommunityBySlugAsync } from "@/lib/communityMeet";
 
 export default function CommunityDetailPage({ slug }: { slug: string }) {
-  const community = getCommunityBySlug(slug) ?? getCommunities()[0];
+  const [community, setCommunity] = useState(() => defaultCommunities.find((item) => item.slug === slug || item.id === slug) ?? defaultCommunities[0]);
+  useEffect(() => {
+    let mounted = true;
+    void getCommunityBySlugAsync(slug).then((item) => {
+      if (mounted && item) setCommunity(item);
+    });
+    return () => {
+      mounted = false;
+    };
+  }, [slug]);
   return (
     <div className="mx-auto min-h-screen max-w-[430px] bg-[#fbfaf7] shadow-phone">
       <Header />

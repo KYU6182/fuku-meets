@@ -330,3 +330,67 @@ export function saveCommunityReview(review: CommunityReview) {
 export function getCommunityHosts() {
   return readJson<CommunityHost[]>(keys.hosts) ?? defaultHosts;
 }
+
+type MeetApiList = {
+  communities?: CommunityMeet[];
+};
+
+type MeetApiDetail = {
+  community?: CommunityMeet;
+};
+
+function getAdminHeaders(): Record<string, string> {
+  if (typeof window === "undefined") return {};
+  const session = window.localStorage.getItem("fuku_admin_session");
+  return session ? { "x-fuku-admin-session": session } : {};
+}
+
+export async function getPublishedCommunitiesAsync() {
+  if (typeof window === "undefined") return defaultCommunities.filter((item) => item.status === "published");
+  try {
+    const response = await fetch("/api/meets", { cache: "no-store" });
+    if (!response.ok) throw new Error("Failed to load communities");
+    const data = (await response.json()) as MeetApiList;
+    return data.communities?.length ? data.communities : getCommunities().filter((item) => item.status === "published");
+  } catch {
+    return getCommunities().filter((item) => item.status === "published");
+  }
+}
+
+export async function getCommunityBySlugAsync(slug: string) {
+  if (typeof window === "undefined") return defaultCommunities.find((item) => item.slug === slug || item.id === slug);
+  try {
+    const response = await fetch(`/api/meets/${encodeURIComponent(slug)}`, { cache: "no-store" });
+    if (!response.ok) throw new Error("Failed to load community");
+    const data = (await response.json()) as MeetApiDetail;
+    return data.community ?? getCommunityBySlug(slug);
+  } catch {
+    return getCommunityBySlug(slug);
+  }
+}
+
+export async function getAdminCommunitiesAsync() {
+  if (typeof window === "undefined") return defaultCommunities;
+  try {
+    const response = await fetch("/api/admin/meets", { cache: "no-store", headers: getAdminHeaders() });
+    if (!response.ok) throw new Error("Failed to load admin communities");
+    const data = (await response.json()) as MeetApiList;
+    return data.communities?.length ? data.communities : getCommunities();
+  } catch {
+    return getCommunities();
+  }
+}
+
+export async function saveAdminCommunityAsync(community: Partial<CommunityMeet>) {
+  const response = await fetch("/api/admin/meets", {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      ...getAdminHeaders(),
+    },
+    body: JSON.stringify(community),
+  });
+  if (!response.ok) throw new Error((await response.json().catch(() => null))?.error ?? "MEETの保存に失敗しました");
+  const data = (await response.json()) as MeetApiDetail;
+  return data.community;
+}

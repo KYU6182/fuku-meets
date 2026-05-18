@@ -3,8 +3,10 @@
 import { ImagePlus, Trash2, Upload } from "lucide-react";
 import type { DragEvent } from "react";
 import { useEffect, useMemo, useState } from "react";
+import { getMediaLibraryAsync } from "@/lib/cms";
 import { createCmsImage, fileToDataUrl, imageCategories, loadMediaLibrary, saveMediaLibrary, validateImageFile } from "@/lib/visualEditor";
-import type { CmsImage, CmsImageCategory } from "@/types/visualEditor";
+import type { CmsImage } from "@/types/cms";
+import type { CmsImageCategory } from "@/types/visualEditor";
 
 export default function DirectImageUploader({
   value,
@@ -16,14 +18,22 @@ export default function DirectImageUploader({
   const [tab, setTab] = useState<"upload" | "library">("upload");
   const [library, setLibrary] = useState<CmsImage[]>([]);
   const [preview, setPreview] = useState(value);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [name, setName] = useState("FV画像");
   const [alt, setAlt] = useState("");
   const [category, setCategory] = useState<CmsImageCategory>("fv");
   const [error, setError] = useState("");
   const [filter, setFilter] = useState<CmsImageCategory | "all">("all");
+  const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
-    setLibrary(loadMediaLibrary());
+    let mounted = true;
+    void getMediaLibraryAsync().then((images) => {
+      if (mounted) setLibrary(images);
+    });
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   useEffect(() => {
@@ -44,27 +54,67 @@ export default function DirectImageUploader({
     }
     setError("");
     const url = await fileToDataUrl(file);
+    setSelectedFile(file);
     setPreview(url);
     setName(file.name.replace(/\.[^.]+$/, ""));
   }
 
-  function saveImage() {
+  async function saveImage() {
     if (!preview) {
       setError("先に画像を選択してください。");
       return;
     }
+    setUploading(true);
+    setError("");
+
+    if (selectedFile) {
+      try {
+        const form = new FormData();
+        form.set("file", selectedFile);
+        form.set("name", name);
+        form.set("alt", alt);
+        form.set("category", category);
+        const response = await fetch("/api/admin/cms/assets", {
+          method: "POST",
+          headers: getAdminHeaders(),
+          body: form,
+        });
+        if (!response.ok) throw new Error((await response.json().catch(() => null))?.error ?? "アップロードに失敗しました");
+        const result = (await response.json()) as { image?: CmsImage };
+        if (!result.image) throw new Error("画像URLを取得できませんでした");
+        const next = [result.image, ...library.filter((image) => image.id !== result.image?.id)];
+        setLibrary(next);
+        saveMediaLibrary(next);
+        onSelect(result.image.url);
+        setSelectedFile(null);
+        setTab("library");
+        return;
+      } catch (uploadError) {
+        setUploading(false);
+        setError(uploadError instanceof Error ? uploadError.message : "Supabase Storageへのアップロードに失敗しました。");
+        return;
+      } finally {
+        setUploading(false);
+      }
+    }
+
     const image = createCmsImage({ url: preview, name, alt, category });
     const next = [image, ...library];
     setLibrary(next);
     saveMediaLibrary(next);
     onSelect(image.url);
     setTab("library");
+    setUploading(false);
   }
 
-  function deleteImage(id: string) {
+  async function deleteImage(id: string) {
     const next = library.filter((image) => image.id !== id);
     setLibrary(next);
     saveMediaLibrary(next);
+    await fetch(`/api/admin/cms/assets?id=${encodeURIComponent(id)}`, {
+      method: "DELETE",
+      headers: getAdminHeaders(),
+    }).catch(() => undefined);
   }
 
   function onDrop(event: DragEvent<HTMLLabelElement>) {
@@ -109,7 +159,9 @@ export default function DirectImageUploader({
           <select value={category} onChange={(event) => setCategory(event.target.value as CmsImageCategory)} className="h-10 w-full rounded-[10px] border border-fuku-border px-3 text-[13px] font-bold">
             {imageCategories.map((item) => <option key={item} value={item}>{item}</option>)}
           </select>
-          <button type="button" onClick={saveImage} className="min-h-[44px] w-full rounded-full bg-fuku-black text-[13px] font-black text-white">保存してこの画像を使う</button>
+          <button type="button" onClick={() => void saveImage()} disabled={uploading} className="min-h-[44px] w-full rounded-full bg-fuku-black text-[13px] font-black text-white disabled:opacity-50">
+            {uploading ? "アップロード中..." : "保存してこの画像を使う"}
+          </button>
         </div>
       ) : (
         <div>
@@ -124,7 +176,7 @@ export default function DirectImageUploader({
                 <p className="mt-2 truncate text-[11px] font-black">{image.name}</p>
                 <div className="mt-2 grid grid-cols-[1fr_auto] gap-1">
                   <button type="button" onClick={() => onSelect(image.url)} className="min-h-[32px] rounded-full bg-fuku-red text-[11px] font-black text-white">選択</button>
-                  <button type="button" onClick={() => deleteImage(image.id)} className="grid h-8 w-8 place-items-center rounded-full border border-fuku-border" aria-label="画像を削除">
+                  <button type="button" onClick={() => void deleteImage(image.id)} className="grid h-8 w-8 place-items-center rounded-full border border-fuku-border" aria-label="画像を削除">
                     <Trash2 size={13} />
                   </button>
                 </div>
@@ -137,4 +189,10 @@ export default function DirectImageUploader({
       )}
     </div>
   );
+}
+
+function getAdminHeaders(): Record<string, string> {
+  if (typeof window === "undefined") return {};
+  const session = window.localStorage.getItem("fuku_admin_session");
+  return session ? { "x-fuku-admin-session": session } : {};
 }

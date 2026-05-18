@@ -13,7 +13,7 @@ import RankingMeetSection from "@/components/RankingMeetSection";
 import SafetyCommunitySection from "@/components/SafetyCommunitySection";
 import StartGuideSection from "@/components/StartGuideSection";
 import TonightInFukuokaSection from "@/components/TonightInFukuokaSection";
-import { getDefaultHomeCmsData, getPublishedHome } from "@/lib/cms";
+import { getDefaultHomeCmsData, getPublishedHomeAsync } from "@/lib/cms";
 import type { HomeCmsData, HomeSectionId } from "@/types/cms";
 
 const iconsData = [
@@ -33,7 +33,13 @@ export default function HomePageClient() {
   const [cms, setCms] = useState<HomeCmsData>(() => getDefaultHomeCmsData());
 
   useEffect(() => {
-    setCms(getPublishedHome());
+    let mounted = true;
+    void getPublishedHomeAsync().then((data) => {
+      if (mounted) setCms(data);
+    });
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   function renderSection(sectionId: HomeSectionId) {

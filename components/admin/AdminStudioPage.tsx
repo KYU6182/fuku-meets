@@ -19,28 +19,35 @@ import { useToast } from "../Toast";
 import {
   getDefaultHomeCmsData,
   getHomeDraft,
+  getHomeDraftAsync,
   getHomeSectionLabel,
   getHomeSections,
   getIconsDraft,
+  getIconsDraftAsync,
   getMagazineDraft,
+  getMagazineDraftAsync,
   getNewsDraft,
+  getNewsDraftAsync,
   getPublishedHome,
   getPublishedIcons,
   getPublishedMagazine,
   getPublishedNews,
   getPublishedRanking,
   getRankingDraft,
-  publishHome,
-  publishIcons,
-  publishMagazine,
-  publishNews,
-  publishRanking,
+  getRankingDraftAsync,
+  publishHomeAsync,
+  publishIconsAsync,
+  publishMagazineAsync,
+  publishNewsAsync,
+  publishRankingAsync,
   resetHomeDraft,
-  saveHomeDraft,
-  saveIconsDraft,
-  saveMagazineDraft,
-  saveNewsDraft,
-  saveRankingDraft,
+  saveHomeDraftAsync,
+  saveIconsDraftAsync,
+  saveMagazineDraftAsync,
+  saveNewsDraftAsync,
+  saveRankingDraftAsync,
+  syncHomeDraftFromDefaultsAsync,
+  syncHomePublishedFromDefaultsAsync,
 } from "@/lib/cms";
 import { storageKeys } from "@/lib/storageKeys";
 import type { HomeCmsData, HomeSectionId, HeroSlide, IconsCmsData, MagazineCmsData, NewsCmsData, RankingCmsData } from "@/types/cms";
@@ -131,14 +138,31 @@ export default function AdminStudioPage() {
   const [activeSlideIndex, setActiveSlideIndex] = useState(0);
   const [mobileMode, setMobileMode] = useState<MobileMode>("preview");
   const [metaNonce, setMetaNonce] = useState(0);
+  const [operationStatus, setOperationStatus] = useState<{ type: "success" | "error"; message: string } | null>(null);
   const { showToast, ToastViewport } = useToast();
 
   useEffect(() => {
-    setHomeDraft(getHomeDraft());
-    setRankingDraft(getRankingDraft());
-    setNewsDraft(getNewsDraft());
-    setIconsDraft(getIconsDraft());
-    setMagazineDraft(getMagazineDraft());
+    let mounted = true;
+    async function loadDrafts() {
+      const [home, ranking, news, icons, magazine] = await Promise.all([
+        getHomeDraftAsync(),
+        getRankingDraftAsync(),
+        getNewsDraftAsync(),
+        getIconsDraftAsync(),
+        getMagazineDraftAsync(),
+      ]);
+      if (!mounted) return;
+      setHomeDraft(home);
+      setRankingDraft(ranking);
+      setNewsDraft(news);
+      setIconsDraft(icons);
+      setMagazineDraft(magazine);
+      setMetaNonce((value) => value + 1);
+    }
+    void loadDrafts();
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   const homeSections = useMemo(() => getHomeSections(homeDraft), [homeDraft]);
@@ -188,27 +212,43 @@ export default function AdminStudioPage() {
     });
   }
 
-  function saveDraft() {
-    if (selectedPage === "home") setHomeDraft(saveHomeDraft(homeDraft));
-    if (selectedPage === "ranking") setRankingDraft(saveRankingDraft(rankingDraft));
-    if (selectedPage === "news") setNewsDraft(saveNewsDraft(newsDraft));
-    if (selectedPage === "icons") setIconsDraft(saveIconsDraft(iconsDraft));
-    if (selectedPage === "magazine") setMagazineDraft(saveMagazineDraft(magazineDraft));
-    setMetaNonce((value) => value + 1);
-    showToast(`${pageLabels[selectedPage]}の下書き保存しました`);
+  async function saveDraft() {
+    try {
+      if (selectedPage === "home") setHomeDraft(await saveHomeDraftAsync(homeDraft));
+      if (selectedPage === "ranking") setRankingDraft(await saveRankingDraftAsync(rankingDraft));
+      if (selectedPage === "news") setNewsDraft(await saveNewsDraftAsync(newsDraft));
+      if (selectedPage === "icons") setIconsDraft(await saveIconsDraftAsync(iconsDraft));
+      if (selectedPage === "magazine") setMagazineDraft(await saveMagazineDraftAsync(magazineDraft));
+      setMetaNonce((value) => value + 1);
+      const message = `${pageLabels[selectedPage]}の下書きをSupabaseに保存しました`;
+      setOperationStatus({ type: "success", message });
+      showToast(message);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "下書き保存に失敗しました";
+      setOperationStatus({ type: "error", message });
+      showToast(message);
+    }
   }
 
-  function publishDraft() {
-    if (selectedPage === "home") {
-      const next = publishHome(homeDraft);
-      setHomeDraft(next);
+  async function publishDraft() {
+    try {
+      if (selectedPage === "home") {
+        const next = await publishHomeAsync(homeDraft);
+        setHomeDraft(next);
+      }
+      if (selectedPage === "ranking") setRankingDraft(await publishRankingAsync(rankingDraft));
+      if (selectedPage === "news") setNewsDraft(await publishNewsAsync(newsDraft));
+      if (selectedPage === "icons") setIconsDraft(await publishIconsAsync(iconsDraft));
+      if (selectedPage === "magazine") setMagazineDraft(await publishMagazineAsync(magazineDraft));
+      setMetaNonce((value) => value + 1);
+      const message = `${pageLabels[selectedPage]}をSupabase publicに公開しました`;
+      setOperationStatus({ type: "success", message });
+      showToast(message);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "公開に失敗しました";
+      setOperationStatus({ type: "error", message });
+      showToast(message);
     }
-    if (selectedPage === "ranking") setRankingDraft(publishRanking(rankingDraft));
-    if (selectedPage === "news") setNewsDraft(publishNews(newsDraft));
-    if (selectedPage === "icons") setIconsDraft(publishIcons(iconsDraft));
-    if (selectedPage === "magazine") setMagazineDraft(publishMagazine(magazineDraft));
-    setMetaNonce((value) => value + 1);
-    showToast(`${pageLabels[selectedPage]}を公開しました`);
   }
 
   function resetDraft() {
@@ -223,10 +263,28 @@ export default function AdminStudioPage() {
     showToast(`${pageLabels[selectedPage]}の下書きを公開データへ戻しました`);
   }
 
+  async function syncHomeFromCodeDefaults(publish = false) {
+    try {
+      const next = publish ? await syncHomePublishedFromDefaultsAsync() : await syncHomeDraftFromDefaultsAsync();
+      setHomeDraft(next);
+      setSelectedPage("home");
+      setSelectedHomeSectionId("hero");
+      setActiveSlideIndex(0);
+      setMetaNonce((value) => value + 1);
+      const message = publish ? "現在のコード初期値をSupabase publicへ反映しました" : "現在のコード初期値をSupabase draftへ再同期しました";
+      setOperationStatus({ type: "success", message });
+      showToast(message);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "再同期に失敗しました";
+      setOperationStatus({ type: "error", message });
+      showToast(message);
+    }
+  }
+
   return (
     <AdminLayout title="CMS Studio">
       <div className="mb-4 rounded-[18px] border border-fuku-border bg-white p-4 shadow-soft">
-        <div className="grid gap-3 lg:grid-cols-[220px_1fr_auto_auto_auto_auto] lg:items-center">
+        <div className="grid gap-3 lg:grid-cols-[220px_1fr_auto_auto_auto_auto_auto_auto] lg:items-center">
           <label className="block">
             <span className="text-[11px] font-black uppercase tracking-widest text-fuku-gray">編集ページ</span>
             <select
@@ -264,7 +322,18 @@ export default function AdminStudioPage() {
             <RotateCcw size={16} />
             リセット
           </button>
+          <button type="button" onClick={() => void syncHomeFromCodeDefaults(false)} className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-full border border-fuku-red px-5 text-[12px] font-black text-fuku-red">
+            現在値から再同期
+          </button>
+          <button type="button" onClick={() => void syncHomeFromCodeDefaults(true)} className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-full bg-[#fff1f1] px-5 text-[12px] font-black text-fuku-red">
+            現在値を公開
+          </button>
         </div>
+        {operationStatus ? (
+          <p className={`mt-3 rounded-[12px] px-4 py-3 text-[12px] font-black ${operationStatus.type === "success" ? "bg-[#eefbf1] text-[#166534]" : "bg-[#fff1f1] text-fuku-red"}`}>
+            {operationStatus.message}
+          </p>
+        ) : null}
       </div>
 
       <div className="mb-4 grid grid-cols-2 gap-2 xl:hidden">

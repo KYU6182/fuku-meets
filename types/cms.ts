@@ -7,6 +7,18 @@ export type CmsImage = {
   createdAt: string;
 };
 
+export type CmsPageSlug = "home" | "ranking" | "news" | "icons" | "magazine";
+export type CmsStatus = "draft" | "public";
+
+export type CmsPresetStyle = {
+  background: "white" | "lightGray" | "beige" | "black";
+  accent: "red" | "black";
+  headingSize: "md" | "lg" | "xl" | "magazine";
+  cardStyle: "default" | "pickup" | "dark" | "compact";
+  layout: "single" | "horizontalCards" | "grid" | "magazineList";
+  ctaStyle: "redPrimary" | "blackPrimary" | "outline";
+};
+
 export type CmsSectionBase = {
   id: string;
   title: string;

@@ -1,6 +1,13 @@
 import { storageKeys } from "@/lib/storageKeys";
+import {
+  defaultHomeCmsData,
+  defaultSectionOrder,
+  getDefaultHomeCmsData,
+  sectionLabels,
+} from "@/lib/cms/homeDefaults";
 import type {
   CmsImage,
+  CmsPageSlug,
   HomeCmsData,
   HomeSectionConfig,
   HomeSectionId,
@@ -8,241 +15,8 @@ import type {
   MagazineCmsData,
   NewsCmsData,
   RankingCmsData,
-  HeroSlide,
 } from "@/types/cms";
-
-const sectionLabels: Record<HomeSectionId, string> = {
-  hero: "FV / Hero",
-  tonight: "TONIGHT IN FUKUOKA",
-  ranking: "FUKUOKA RANKING",
-  fukuIcons: "FUKU ICONS / PEOPLE",
-  localMedia: "LOCAL MEDIA / NEWS",
-  startGuide: "START GUIDE",
-  safety: "安心・安全",
-  magazine: "MAGAZINE",
-  followUs: "FOLLOW US",
-};
-
-export const defaultSectionOrder: HomeSectionId[] = [
-  "hero",
-  "tonight",
-  "ranking",
-  "fukuIcons",
-  "localMedia",
-  "startGuide",
-  "safety",
-  "magazine",
-  "followUs",
-];
-
-export const defaultHomeSections: HomeSectionConfig[] = defaultSectionOrder.map((id) => ({
-  id,
-  label: sectionLabels[id],
-  isVisible: true,
-}));
-
-export const defaultHeroSlides: HeroSlide[] = [
-  {
-    id: "hero-1",
-    label: "MEET",
-    title: "福岡の“好き”を見つけて、\nリアルに会いにいく。",
-    subtitle: "店、人、街、カルチャーを見つけて、\n参加して、つながろう。",
-    image: "/images/hero.jpg",
-    ctaText: "今夜のMEETを見る",
-    ctaHref: "/meet",
-    overlayColor: "rgba(255,255,255,0.78)",
-    textColor: "#111111",
-    buttonColor: "#e52421",
-    buttonTextColor: "#ffffff",
-    titleFontSize: "lg",
-    subtitleFontSize: "md",
-    align: "left",
-    isVisible: true,
-    backgroundColor: "#111111",
-    cornerRadius: "medium",
-    spacing: "standard",
-  },
-  {
-    id: "hero-2",
-    label: "TONIGHT",
-    title: "今日集まれる\n福岡のコミュニティ。",
-    subtitle: "ライブ後、カフェ作業、一人参加OK。\n同じ熱量の人と会いにいく。",
-    image: "/images/meet/creep-live.jpg",
-    ctaText: "MEETを見る",
-    ctaHref: "/meet",
-    overlayColor: "rgba(17,17,17,0.68)",
-    textColor: "#ffffff",
-    buttonColor: "#e52421",
-    buttonTextColor: "#ffffff",
-    titleFontSize: "lg",
-    subtitleFontSize: "md",
-    align: "left",
-    isVisible: true,
-    backgroundColor: "#111111",
-    cornerRadius: "medium",
-    spacing: "standard",
-  },
-  {
-    id: "hero-3",
-    label: "ICONS",
-    title: "福岡をつくる、\n注目の人。",
-    subtitle: "モデル、美容師、DJ、クリエイターを見つける。",
-    image: "/images/icons/yui.jpg",
-    ctaText: "FUKU ICONSを見る",
-    ctaHref: "/icons",
-    overlayColor: "rgba(17,17,17,0.7)",
-    textColor: "#ffffff",
-    buttonColor: "#e52421",
-    buttonTextColor: "#ffffff",
-    titleFontSize: "lg",
-    subtitleFontSize: "md",
-    align: "left",
-    isVisible: true,
-    backgroundColor: "#111111",
-    cornerRadius: "medium",
-    spacing: "standard",
-  },
-  {
-    id: "hero-4",
-    label: "RANKING",
-    title: "みんなの“好き”で、\n福岡が動く。",
-    subtitle: "ランキングから、次のMEETや特集が生まれる。",
-    image: "/images/ranking/super-bonrepas.jpg",
-    ctaText: "投票する",
-    ctaHref: "/ranking?mode=vote",
-    overlayColor: "rgba(17,17,17,0.7)",
-    textColor: "#ffffff",
-    buttonColor: "#e52421",
-    buttonTextColor: "#ffffff",
-    titleFontSize: "lg",
-    subtitleFontSize: "md",
-    align: "left",
-    isVisible: true,
-    backgroundColor: "#111111",
-    cornerRadius: "medium",
-    spacing: "standard",
-  },
-  {
-    id: "hero-5",
-    label: "VISITOR",
-    title: "福岡に来た夜、\nどこ行く？",
-    subtitle: "遠征・観光・ひとり旅でも、地元のリアルにつながれる。",
-    image: "/images/fukuoka-city.jpg",
-    ctaText: "初めての方へ",
-    ctaHref: "/start-guide",
-    overlayColor: "rgba(17,17,17,0.72)",
-    textColor: "#ffffff",
-    buttonColor: "#e52421",
-    buttonTextColor: "#ffffff",
-    titleFontSize: "lg",
-    subtitleFontSize: "md",
-    align: "left",
-    isVisible: true,
-    backgroundColor: "#111111",
-    cornerRadius: "medium",
-    spacing: "standard",
-  },
-];
-
-export function getDefaultHomeCmsData(): HomeCmsData {
-  return {
-    hero: {
-      id: "hero",
-      slides: defaultHeroSlides.map((slide) => ({ ...slide })),
-      autoplay: true,
-      intervalMs: 4500,
-      height: "standard",
-      isVisible: true,
-    },
-    tonight: {
-      id: "tonight",
-      title: "TONIGHT IN FUKUOKA",
-      subtitle: "今日の気分や趣味で集まれるコミュニティ。",
-      description: "初めてでも安心して参加できます。素敵な出会いを楽しもう。",
-      showNewBadge: true,
-      categoryIds: ["music", "drink-now", "midnight", "girls", "solo", "visitor", "cafe-work"],
-      ctaText: "すべて見る",
-      ctaHref: "/meet",
-      isVisible: true,
-    },
-    ranking: {
-      id: "ranking",
-      title: "FUKUOKA RANKING",
-      subtitle: "みんなの“いつもの福岡”ランキング",
-      description: "暮らしの中で見つけた、リアルに助かる・通いたくなるお気に入りをシェアしよう。",
-      ctaText: "ランキングページへ",
-      ctaHref: "/ranking",
-      isVisible: true,
-    },
-    fukuIcons: {
-      id: "fukuIcons",
-      title: "FUKU ICONS / PEOPLE",
-      subtitle: "福岡をつくる、注目の人たち。",
-      description: "人からMEETへ、店へ。気になるアイコンの推しをチェック。",
-      featuredIconIds: ["yui", "rena", "keita"],
-      ctaText: "FUKU ICONSを見る",
-      ctaHref: "/icons",
-      isVisible: true,
-    },
-    localMedia: {
-      id: "localMedia",
-      title: "LOCAL MEDIA / NEWS",
-      subtitle: "福岡のカルチャーを、記事で知る。",
-      description: "ライブ後の店、街のニュース、遠征ガイドまで。福岡の“いま”を記事でチェック。",
-      featuredNewsIds: ["local-news-fukuoka-now", "fukuoka-food-feature", "area-guide-fukuoka"],
-      ctaText: "NEWSを見る",
-      ctaHref: "/news",
-      isVisible: true,
-    },
-    startGuide: {
-      id: "startGuide",
-      title: "START GUIDE",
-      subtitle: "はじめての福岡、はじめてのFUKU-MEETS。",
-      mainCardTitle: "福岡に来た夜、どこ行く？",
-      mainCardDescription: "観光・遠征・ひとり旅でも安心。今日参加できるMEETと地元民の推し店をチェック。",
-      mainCardImage: "/images/fukuoka-city.jpg",
-      ctaText: "VISITOR GUIDEを見る",
-      ctaHref: "/visitor",
-      isVisible: true,
-    },
-    safety: {
-      id: "safety",
-      title: "安心・安全に楽しめる仕組み",
-      description: "みんなが気持ちよくつながれる場を守っています。",
-      items: [
-        { id: "verify", title: "本人確認", description: "参加者の安全性を高めます。", icon: "ShieldCheck" },
-        { id: "review", title: "レビュー", description: "参加後の声で安心感を見える化。", icon: "Star" },
-        { id: "report", title: "通報・ブロック", description: "迷惑行為にすぐ対応します。", icon: "Siren" },
-        { id: "women", title: "女性安心設計", description: "女性限定や男女比を事前に確認。", icon: "Users" },
-        { id: "age", title: "20歳以上確認", description: "飲酒を伴うMEETは20歳以上のみ。", icon: "BadgeCheck" },
-        { id: "venue", title: "店舗は参加者に共有", description: "詳細は参加者にのみ共有される場合があります。", icon: "MapPin" },
-      ],
-      isVisible: true,
-    },
-    magazine: {
-      id: "magazine",
-      title: "FUKU-MEETS MAGAZINE",
-      subtitle: "福岡の空気を、Webと紙で残すローカルマガジン。",
-      description: "Web記事、フリーペーパー、設置店舗を通じて、福岡の人・店・街・イベントを特集します。",
-      image: "/images/paper-cover.jpg",
-      ctaText: "最新号を見る",
-      ctaHref: "/magazine",
-      isVisible: true,
-    },
-    followUs: {
-      id: "followUs",
-      title: "FOLLOW US",
-      subtitle: "Instagramで、今夜の福岡をチェック。",
-      description: "今日のMEET、ランキング、遠征ガイド、参加レポートを更新中。",
-      ctaText: "Instagramを見る",
-      ctaHref: "/meet",
-      isVisible: true,
-    },
-    sectionOrder: [...defaultSectionOrder],
-  };
-}
-
-export const defaultHomeCmsData = getDefaultHomeCmsData();
+export { defaultHomeCmsData, defaultSectionOrder, getDefaultHomeCmsData };
 
 export function getDefaultRankingCmsData(): RankingCmsData {
   return {
@@ -494,6 +268,197 @@ export function addMediaImage(image: CmsImage) {
 
 export function deleteMediaImage(id: string) {
   return saveMediaLibrary(getMediaLibrary().filter((image) => image.id !== id));
+}
+
+type CmsApiResponse<T> = {
+  data?: T;
+  images?: CmsImage[];
+  source?: "supabase" | "fallback";
+  error?: string;
+  meta?: {
+    updatedAt?: string;
+    publishedAt?: string;
+  };
+};
+
+function getAdminSessionHeader(): Record<string, string> {
+  if (typeof window === "undefined") return {};
+  const session = window.localStorage.getItem(storageKeys.adminSession);
+  return session ? { "x-fuku-admin-session": session } : {};
+}
+
+async function fetchJson<T>(input: RequestInfo | URL, init?: RequestInit) {
+  const response = await fetch(input, {
+    ...init,
+    headers: {
+      ...(init?.headers ?? {}),
+    },
+  });
+  if (!response.ok) throw new Error(await response.text());
+  return (await response.json()) as T;
+}
+
+function isBrowser() {
+  return typeof window !== "undefined";
+}
+
+async function getPublicCms<T>(page: CmsPageSlug, fallback: () => T, normalize: (data?: Partial<T> | null) => T) {
+  if (!isBrowser()) return fallback();
+  try {
+    const result = await fetchJson<CmsApiResponse<T>>(`/api/cms/${page}?status=public`, { cache: "no-store" });
+    return normalize((result.data ?? null) as Partial<T> | null);
+  } catch {
+    // 公開サイトはブラウザごとの差分を避けるため、localStorageには絶対にフォールバックしません。
+    return fallback();
+  }
+}
+
+async function getAdminCms<T>(page: CmsPageSlug, status: "draft" | "public", fallback: () => T, normalize: (data?: Partial<T> | null) => T) {
+  if (!isBrowser()) return fallback();
+  try {
+    const result = await fetchJson<CmsApiResponse<T>>(`/api/admin/cms/${page}?status=${status}`, {
+      cache: "no-store",
+      headers: getAdminSessionHeader(),
+    });
+    return normalize((result.data ?? null) as Partial<T> | null);
+  } catch {
+    return fallback();
+  }
+}
+
+async function writeAdminCms<T>(
+  page: CmsPageSlug,
+  data: T,
+  action: "save" | "publish" | "sync-defaults",
+  localDraftWrite: (data: T) => T,
+  normalize: (data?: Partial<T> | null) => T,
+) {
+  if (!isBrowser()) return normalize(data as Partial<T>);
+  const result = await fetchJson<CmsApiResponse<T>>(`/api/admin/cms/${page}`, {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      ...getAdminSessionHeader(),
+    },
+    body: JSON.stringify({ action, data }),
+  });
+
+  if (result.source !== "supabase" || result.error) {
+    throw new Error(result.error ?? "Supabaseへの保存に失敗しました");
+  }
+
+  const normalized = normalize((result.data ?? data) as Partial<T>);
+  if (action === "save" || action === "sync-defaults") {
+    // localStorageはStudioの下書き補助だけに使います。公開HOMEはこの値を読みません。
+    localDraftWrite(normalized as T);
+  }
+  return normalized;
+}
+
+const normalizeGeneric = <T extends { updatedAt?: string; publishedAt?: string }>(defaults: () => T) => (input?: Partial<T> | null): T => ({
+  ...defaults(),
+  ...(input ?? {}),
+});
+
+export async function getPublishedHomeAsync() {
+  return getPublicCms<HomeCmsData>("home", getDefaultHomeCmsData, mergeHomeCmsData);
+}
+
+export async function getHomeDraftAsync() {
+  return getAdminCms<HomeCmsData>("home", "draft", getDefaultHomeCmsData, mergeHomeCmsData);
+}
+
+export async function saveHomeDraftAsync(data: HomeCmsData) {
+  return writeAdminCms<HomeCmsData>("home", data, "save", saveHomeDraft, mergeHomeCmsData);
+}
+
+export async function publishHomeAsync(data: HomeCmsData) {
+  return writeAdminCms<HomeCmsData>("home", data, "publish", saveHomeDraft, mergeHomeCmsData);
+}
+
+export async function syncHomeDraftFromDefaultsAsync() {
+  return writeAdminCms<HomeCmsData>("home", getDefaultHomeCmsData(), "sync-defaults", saveHomeDraft, mergeHomeCmsData);
+}
+
+export async function syncHomePublishedFromDefaultsAsync() {
+  return writeAdminCms<HomeCmsData>("home", getDefaultHomeCmsData(), "publish", saveHomeDraft, mergeHomeCmsData);
+}
+
+export async function getPublishedRankingAsync() {
+  return getPublicCms<RankingCmsData>("ranking", getDefaultRankingCmsData, normalizeGeneric(getDefaultRankingCmsData));
+}
+
+export async function getRankingDraftAsync() {
+  return getAdminCms<RankingCmsData>("ranking", "draft", getDefaultRankingCmsData, normalizeGeneric(getDefaultRankingCmsData));
+}
+
+export async function saveRankingDraftAsync(data: RankingCmsData) {
+  return writeAdminCms<RankingCmsData>("ranking", data, "save", saveRankingDraft, normalizeGeneric(getDefaultRankingCmsData));
+}
+
+export async function publishRankingAsync(data: RankingCmsData) {
+  return writeAdminCms<RankingCmsData>("ranking", data, "publish", saveRankingDraft, normalizeGeneric(getDefaultRankingCmsData));
+}
+
+export async function getPublishedNewsAsync() {
+  return getPublicCms<NewsCmsData>("news", getDefaultNewsCmsData, normalizeGeneric(getDefaultNewsCmsData));
+}
+
+export async function getNewsDraftAsync() {
+  return getAdminCms<NewsCmsData>("news", "draft", getDefaultNewsCmsData, normalizeGeneric(getDefaultNewsCmsData));
+}
+
+export async function saveNewsDraftAsync(data: NewsCmsData) {
+  return writeAdminCms<NewsCmsData>("news", data, "save", saveNewsDraft, normalizeGeneric(getDefaultNewsCmsData));
+}
+
+export async function publishNewsAsync(data: NewsCmsData) {
+  return writeAdminCms<NewsCmsData>("news", data, "publish", saveNewsDraft, normalizeGeneric(getDefaultNewsCmsData));
+}
+
+export async function getPublishedIconsAsync() {
+  return getPublicCms<IconsCmsData>("icons", getDefaultIconsCmsData, normalizeGeneric(getDefaultIconsCmsData));
+}
+
+export async function getIconsDraftAsync() {
+  return getAdminCms<IconsCmsData>("icons", "draft", getDefaultIconsCmsData, normalizeGeneric(getDefaultIconsCmsData));
+}
+
+export async function saveIconsDraftAsync(data: IconsCmsData) {
+  return writeAdminCms<IconsCmsData>("icons", data, "save", saveIconsDraft, normalizeGeneric(getDefaultIconsCmsData));
+}
+
+export async function publishIconsAsync(data: IconsCmsData) {
+  return writeAdminCms<IconsCmsData>("icons", data, "publish", saveIconsDraft, normalizeGeneric(getDefaultIconsCmsData));
+}
+
+export async function getPublishedMagazineAsync() {
+  return getPublicCms<MagazineCmsData>("magazine", getDefaultMagazineCmsData, normalizeGeneric(getDefaultMagazineCmsData));
+}
+
+export async function getMagazineDraftAsync() {
+  return getAdminCms<MagazineCmsData>("magazine", "draft", getDefaultMagazineCmsData, normalizeGeneric(getDefaultMagazineCmsData));
+}
+
+export async function saveMagazineDraftAsync(data: MagazineCmsData) {
+  return writeAdminCms<MagazineCmsData>("magazine", data, "save", saveMagazineDraft, normalizeGeneric(getDefaultMagazineCmsData));
+}
+
+export async function publishMagazineAsync(data: MagazineCmsData) {
+  return writeAdminCms<MagazineCmsData>("magazine", data, "publish", saveMagazineDraft, normalizeGeneric(getDefaultMagazineCmsData));
+}
+
+export async function getMediaLibraryAsync() {
+  if (!isBrowser()) return getMediaLibrary();
+  try {
+    const result = await fetchJson<CmsApiResponse<CmsImage[]>>("/api/admin/cms/assets", {
+      cache: "no-store",
+      headers: getAdminSessionHeader(),
+    });
+    return result.images ?? getMediaLibrary();
+  } catch {
+    return getMediaLibrary();
+  }
 }
 
 export function getHomeSections(data: HomeCmsData): HomeSectionConfig[] {

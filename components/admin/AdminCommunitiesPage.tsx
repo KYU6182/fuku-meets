@@ -1,12 +1,23 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import AdminLayout from "./AdminLayout";
 import AdminStatusBadge from "./AdminStatusBadge";
 import AdminTable from "./AdminTable";
-import { getCommunities, getCommunityParticipants, getCommunityReviews } from "@/lib/communityMeet";
+import { getAdminCommunitiesAsync, getCommunities, getCommunityParticipants, getCommunityReviews } from "@/lib/communityMeet";
+import type { CommunityMeet } from "@/types/communityMeet";
 
 export function AdminCommunitiesPage() {
-  const communities = getCommunities();
+  const [communities, setCommunities] = useState<CommunityMeet[]>(() => getCommunities());
+  useEffect(() => {
+    let mounted = true;
+    void getAdminCommunitiesAsync().then((items) => {
+      if (mounted) setCommunities(items);
+    });
+    return () => {
+      mounted = false;
+    };
+  }, []);
   return (
     <AdminLayout title="COMMUNITY管理">
       <div className="mb-5 flex flex-wrap items-center justify-between gap-3">

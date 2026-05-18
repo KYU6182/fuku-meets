@@ -1,15 +1,24 @@
 "use client";
 
 import { CalendarPlus } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import BottomNav from "./BottomNav";
 import CommunityCard from "./CommunityCard";
 import Header from "./Header";
-import { getCommunities, meetCategories } from "@/lib/communityMeet";
+import { defaultCommunities, getPublishedCommunitiesAsync, meetCategories } from "@/lib/communityMeet";
 
 export default function CommunityListPage() {
   const [category, setCategory] = useState("すべて");
-  const communities = useMemo(() => getCommunities().filter((item) => item.status === "published"), []);
+  const [communities, setCommunities] = useState(() => defaultCommunities.filter((item) => item.status === "published"));
+  useEffect(() => {
+    let mounted = true;
+    void getPublishedCommunitiesAsync().then((items) => {
+      if (mounted) setCommunities(items);
+    });
+    return () => {
+      mounted = false;
+    };
+  }, []);
   const filtered = category === "すべて" ? communities : communities.filter((item) => item.category === category || item.tags.includes(category));
 
   return (

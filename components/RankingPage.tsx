@@ -30,7 +30,7 @@ import RankingPickedComments from "./RankingPickedComments";
 import RankingVoteButton from "./RankingVoteButton";
 import { addToLocalList, useToast } from "./Toast";
 import { rankingThemeAliases } from "@/lib/data/rankings";
-import { getDefaultRankingCmsData, getPublishedRanking } from "@/lib/cms";
+import { getDefaultRankingCmsData, getPublishedRankingAsync } from "@/lib/cms";
 import { getEntryVoteCount, getRankingTheme } from "@/lib/rankingSystem";
 import { storageKeys } from "@/lib/storageKeys";
 import type { RankingCmsData } from "@/types/cms";
@@ -589,12 +589,18 @@ export default function RankingPage() {
   const mode = searchParams.get("mode");
 
   useEffect(() => {
-    const published = getPublishedRanking();
-    setCms(published);
-    if (rankingThemes[published.defaultTab as CategoryId]) {
-      setSelectedCategory(published.defaultTab as CategoryId);
-      setSelectedRanking(rankingThemes[published.defaultTab as CategoryId][0].id);
-    }
+    let mounted = true;
+    void getPublishedRankingAsync().then((published) => {
+      if (!mounted) return;
+      setCms(published);
+      if (rankingThemes[published.defaultTab as CategoryId]) {
+        setSelectedCategory(published.defaultTab as CategoryId);
+        setSelectedRanking(rankingThemes[published.defaultTab as CategoryId][0].id);
+      }
+    });
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   useEffect(() => {

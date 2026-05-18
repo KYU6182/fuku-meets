@@ -12,6 +12,9 @@ export type CommunityMeet = {
   endTime: string;
   description: string;
   tags: string[];
+  fee?: number;
+  galleryImages?: string[];
+  notices?: string[];
   capacity: number;
   participantCount: number;
   maleRatio: number;

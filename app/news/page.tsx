@@ -6,16 +6,22 @@ import BottomNav from "@/components/BottomNav";
 import Button from "@/components/Button";
 import Header from "@/components/Header";
 import PageHero from "@/components/PageHero";
-import { getDefaultNewsCmsData, getPublishedNews } from "@/lib/cms";
+import { getDefaultNewsCmsData, getPublishedNewsAsync } from "@/lib/cms";
 import { newsArticles } from "@/lib/data/news";
 
 export default function NewsPage() {
   const [cms, setCms] = useState(() => getDefaultNewsCmsData());
   const [tab, setTab] = useState("すべて");
   useEffect(() => {
-    const published = getPublishedNews();
-    setCms(published);
-    setTab(published.categories[0] ?? "すべて");
+    let mounted = true;
+    void getPublishedNewsAsync().then((published) => {
+      if (!mounted) return;
+      setCms(published);
+      setTab(published.categories[0] ?? "すべて");
+    });
+    return () => {
+      mounted = false;
+    };
   }, []);
   const tabs = cms.categories.length ? cms.categories : getDefaultNewsCmsData().categories;
   const articles = tab === "すべて" ? newsArticles : newsArticles.filter((article) => article.category === tab);

@@ -18,7 +18,7 @@ import BottomNav from "./BottomNav";
 import Header from "./Header";
 import { addToLocalList, useToast } from "./Toast";
 import IconActionButtons from "./IconActionButtons";
-import { getDefaultIconsCmsData, getPublishedIcons } from "@/lib/cms";
+import { getDefaultIconsCmsData, getPublishedIconsAsync } from "@/lib/cms";
 import { supportIcon } from "@/lib/iconVoteSystem";
 import { storageKeys } from "@/lib/storageKeys";
 import type { IconsCmsData } from "@/types/cms";
@@ -566,7 +566,13 @@ export default function IconsPage() {
   const [cms, setCms] = useState<IconsCmsData>(() => getDefaultIconsCmsData());
   const [selectedCategory, setSelectedCategory] = useState("すべて");
   useEffect(() => {
-    setCms(getPublishedIcons());
+    let mounted = true;
+    void getPublishedIconsAsync().then((published) => {
+      if (mounted) setCms(published);
+    });
+    return () => {
+      mounted = false;
+    };
   }, []);
   const filteredPeople = useMemo(() => {
     if (selectedCategory === "すべて") return iconsRanking;

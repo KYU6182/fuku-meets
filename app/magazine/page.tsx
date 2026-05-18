@@ -6,14 +6,20 @@ import BottomNav from "@/components/BottomNav";
 import Header from "@/components/Header";
 import LinkCard from "@/components/LinkCard";
 import PageHero from "@/components/PageHero";
-import { getDefaultMagazineCmsData, getPublishedMagazine } from "@/lib/cms";
+import { getDefaultMagazineCmsData, getPublishedMagazineAsync } from "@/lib/cms";
 import { magazineIssues, magazineLocations } from "@/lib/data/magazine";
 
 export default function MagazinePage() {
   const [cms, setCms] = useState(() => getDefaultMagazineCmsData());
   const latest = magazineIssues[0];
   useEffect(() => {
-    setCms(getPublishedMagazine());
+    let mounted = true;
+    void getPublishedMagazineAsync().then((published) => {
+      if (mounted) setCms(published);
+    });
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   return (
