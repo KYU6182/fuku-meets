@@ -6,7 +6,7 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 async function getPublicIcon(slug: string): Promise<FukuIcon> {
-  const fallback = icons.find((item) => item.slug === slug) ?? icons[0];
+  const fallback: FukuIcon = icons.find((item) => item.slug === slug) ?? icons[0];
   const supabase = getSupabaseAnonClient();
   if (!supabase) return fallback;
 
@@ -27,7 +27,7 @@ async function getPublicIcon(slug: string): Promise<FukuIcon> {
     tab: data.category ?? fallback.tab,
     area: data.area ?? fallback.area,
     votes: Number(data.votes ?? fallback.votes),
-    supportCount: Number(data.support_count ?? data.votes ?? fallback.supportCount ?? fallback.votes),
+    supportCount: Number(data.support_count ?? data.votes ?? fallback.votes ?? 0),
     attention: data.attention_score ? `${data.attention_score}%` : fallback.attention,
     image: data.avatar_url || fallback.image,
     heroImage: data.hero_image_url || data.avatar_url || fallback.heroImage || fallback.image,

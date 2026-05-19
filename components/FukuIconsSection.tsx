@@ -18,7 +18,21 @@ type FukuIconsSectionProps = {
   cms?: HomeCmsData["fukuIcons"];
 };
 
-const defaultRanking = [
+type RankedIcon = {
+  rank: number;
+  name: string;
+  genre: string;
+  area: string;
+  votes: string;
+  votesNumber: number;
+  image: string;
+  href: string;
+  slug: string;
+  profile?: string;
+  attentionScore?: string | number;
+};
+
+const defaultRanking: RankedIcon[] = [
   { rank: 1, name: "YUI", genre: "model / creator", area: "天神エリア", votes: "2,430票", votesNumber: 2430, image: "/images/icons/yui.jpg", href: "/icons/yui", slug: "yui", profile: "福岡から全国へ。いま注目したい次世代アイコン。", attentionScore: "98.7" },
   { rank: 2, name: "RENA", genre: "model", area: "大名エリア", votes: "1,982票", votesNumber: 1982, image: "/images/icons/rena.jpg", href: "/icons/rena", slug: "rena", profile: "", attentionScore: "95.4" },
   { rank: 3, name: "ANNA", genre: "model", area: "天神エリア", votes: "1,540票", votesNumber: 1540, image: "/images/icons/anna.jpg", href: "/icons/anna", slug: "anna", profile: "", attentionScore: "91.2" },
@@ -39,8 +53,6 @@ type ApiIcon = {
   updatedAt?: string;
   createdAt?: string;
 };
-
-type RankedIcon = (typeof defaultRanking)[number];
 
 function rerankIcons(items: RankedIcon[]) {
   return [...items]
