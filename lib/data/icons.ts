@@ -7,13 +7,18 @@ export type FukuIcon = {
   tab: string;
   area: string;
   votes: number;
+  supportCount?: number;
   attention: string;
   image: string;
+  heroImage?: string;
+  galleryImages?: string[];
   instagram: string;
   copy: string;
+  profileText?: string;
+  interviewText?: string;
   tags: string[];
   favoriteSpots: string[];
-  comments: { user: string; text: string }[];
+  comments: { user: string; text: string; avatarUrl?: string }[];
 };
 
 export const icons = [

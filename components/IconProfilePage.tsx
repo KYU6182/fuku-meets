@@ -7,29 +7,16 @@ import type { FukuIcon } from "@/lib/data/icons";
 import BottomNav from "./BottomNav";
 import Button from "./Button";
 import Header from "./Header";
-import Modal from "./Modal";
+import IconVoteButton from "./IconVoteButton";
 import { addToLocalList, useToast } from "./Toast";
-import { coverVoteIcon, supportIcon } from "@/lib/iconVoteSystem";
 import { storageKeys } from "@/lib/storageKeys";
 
 export default function IconProfilePage({ icon }: { icon: FukuIcon }) {
-  const [voteOpen, setVoteOpen] = useState(false);
-  const [voteMode, setVoteMode] = useState<"support" | "cover">("support");
   const [votes, setVotes] = useState(icon.votes);
   const [voted, setVoted] = useState(false);
   const { showToast, ToastViewport } = useToast();
-
-  function completeVote() {
-    const result = voteMode === "cover" ? coverVoteIcon(icon.slug) : supportIcon(icon.slug);
-    if (result.ok) {
-      addToLocalList(storageKeys.supportedIcons, icon.slug);
-      addToLocalList(storageKeys.votedItems, `${voteMode}:${icon.slug}`);
-      setVotes((value) => value + 1);
-      setVoted(true);
-      setVoteOpen(false);
-    }
-    showToast(result.message);
-  }
+  const heroImage = icon.heroImage || icon.image;
+  const gallery = (icon.galleryImages?.length ? icon.galleryImages : [heroImage, icon.image, "/images/spots/cafe-yakuin.jpg"]).filter(Boolean);
 
   return (
     <div className="mx-auto min-h-screen max-w-[430px] bg-fuku-bg shadow-phone">
@@ -37,9 +24,9 @@ export default function IconProfilePage({ icon }: { icon: FukuIcon }) {
       <main className="pb-28">
         <section className="bg-white px-4 py-5">
           <div
-            className="h-[250px] rounded-[16px] bg-fuku-light bg-cover bg-center"
+            className="h-[360px] rounded-[16px] bg-fuku-light bg-cover bg-[center_30%] min-[390px]:h-[420px]"
             style={{
-              backgroundImage: `linear-gradient(180deg, rgba(255,255,255,.05), rgba(17,17,17,.28)), url('${icon.image}')`,
+              backgroundImage: `linear-gradient(180deg, rgba(255,255,255,.05), rgba(17,17,17,.28)), url('${heroImage}')`,
             }}
           />
           <div className="mt-5 flex items-end justify-between gap-4">
@@ -48,9 +35,6 @@ export default function IconProfilePage({ icon }: { icon: FukuIcon }) {
               <p className="mt-2 text-[13px] font-bold text-fuku-gray">{icon.category}</p>
               <p className="mt-2 text-[12px] font-black text-fuku-black">{icon.instagram}</p>
             </div>
-            <span className="rounded-full bg-fuku-light px-4 py-2 text-[12px] font-black">
-              RANK {icon.rank}
-            </span>
           </div>
           <p className="mt-4 text-[14px] font-black leading-relaxed text-fuku-black">{icon.copy}</p>
           <div className="mt-4 grid grid-cols-3 gap-2">
@@ -58,11 +42,15 @@ export default function IconProfilePage({ icon }: { icon: FukuIcon }) {
             <Info label="注目度" value={icon.attention} />
             <Info label="投票数" value={votes.toLocaleString()} />
           </div>
-          <p className="mt-4 rounded-full bg-fuku-light px-4 py-2 text-center text-[12px] font-black text-fuku-black">
-            本日の投票権 {voted ? "0/1" : "1/1"}
-          </p>
           <div className="mt-4 grid grid-cols-2 gap-3">
-            <Button onClick={() => { setVoteMode("support"); setVoteOpen(true); }}>応援する</Button>
+            <IconVoteButton
+              slug={icon.slug}
+              className="min-h-[44px] rounded-full px-5 text-[13px]"
+              onVoted={(payload) => {
+                setVotes(payload?.votes ?? votes + 1);
+                setVoted(true);
+              }}
+            />
             <Button
               variant="outline"
               onClick={() => {
@@ -87,11 +75,11 @@ export default function IconProfilePage({ icon }: { icon: FukuIcon }) {
         <section className="bg-white px-4 py-6">
           <h2 className="headline-condensed text-[30px] uppercase leading-none">PHOTO GALLERY</h2>
           <div className="mt-4 grid grid-cols-3 gap-2">
-            {[0, 1, 2].map((item) => (
+            {gallery.slice(0, 6).map((image, item) => (
               <div
-                key={item}
+                key={`${image}-${item}`}
                 className="aspect-square rounded-[12px] bg-fuku-light bg-cover bg-center"
-                style={{ backgroundImage: `url('${icon.image}')` }}
+                style={{ backgroundImage: `url('${image}')` }}
               />
             ))}
           </div>
@@ -106,13 +94,13 @@ export default function IconProfilePage({ icon }: { icon: FukuIcon }) {
             ))}
           </div>
           <p className="mt-4 text-[13px] font-bold leading-relaxed text-fuku-gray">
-            福岡を拠点に活動しながら、街の空気やカルチャーを発信。自然体の表現で支持を集めています。
+            {icon.profileText || "福岡を拠点に活動しながら、街の空気やカルチャーを発信。自然体の表現で支持を集めています。"}
           </p>
         </Section>
 
         <Section title="INTERVIEW" icon={<Camera size={18} />}>
           <p className="text-[13px] font-bold leading-relaxed text-fuku-gray">
-            福岡で好きな場所、活動を始めたきっかけ、これから挑戦したいことを聞きました。
+            {icon.interviewText || "福岡で好きな場所、活動を始めたきっかけ、これから挑戦したいことを聞きました。"}
           </p>
         </Section>
 
@@ -130,17 +118,21 @@ export default function IconProfilePage({ icon }: { icon: FukuIcon }) {
         <Section title="推しコメント" icon={<Heart size={18} />}>
           <div className="space-y-3">
             {icon.comments.map((comment) => (
-              <article key={comment.user} className="rounded-[12px] border border-fuku-border bg-white p-4">
-                <p className="text-[13px] font-bold leading-relaxed text-fuku-black">{comment.text}</p>
-                <p className="mt-3 text-[11px] font-black text-fuku-gray">{comment.user}</p>
+              <article key={comment.user} className="flex gap-3 rounded-[12px] border border-fuku-border bg-white p-4">
+                <div className="h-9 w-9 shrink-0 rounded-full bg-fuku-light bg-cover bg-center" style={{ backgroundImage: comment.avatarUrl ? `url('${comment.avatarUrl}')` : undefined }}>
+                  {!comment.avatarUrl ? <span className="grid h-full w-full place-items-center text-[11px] font-black text-fuku-red">{comment.user.replace("@", "").slice(0, 1).toUpperCase()}</span> : null}
+                </div>
+                <div className="min-w-0">
+                  <p className="text-[13px] font-bold leading-relaxed text-fuku-black">{comment.text}</p>
+                  <p className="mt-3 text-[11px] font-black text-fuku-gray">{comment.user}</p>
+                </div>
               </article>
             ))}
           </div>
         </Section>
 
         <section className="bg-white px-4 py-6">
-          <div className="grid grid-cols-2 gap-3">
-            <Button onClick={() => { setVoteMode("cover"); setVoteOpen(true); }}>表紙に投票する</Button>
+          <div className="grid grid-cols-1 gap-3">
             <Button href="https://instagram.com/fuku_meets.jp" variant="light">
               <Instagram size={15} />
               Instagram
@@ -149,14 +141,6 @@ export default function IconProfilePage({ icon }: { icon: FukuIcon }) {
         </section>
       </main>
       <BottomNav />
-      <Modal open={voteOpen} title={`${icon.name}に${voteMode === "cover" ? "表紙投票" : "応援"}しますか？`} onClose={() => setVoteOpen(false)}>
-        <p className="text-[13px] font-bold leading-relaxed text-fuku-gray">
-          1日1回投票できる想定です。MVPでは端末内に投票履歴を保存します。
-        </p>
-        <Button onClick={completeVote} className="mt-5 w-full">
-          {voteMode === "cover" ? "表紙に投票する" : "応援する"}
-        </Button>
-      </Modal>
       <ToastViewport />
     </div>
   );

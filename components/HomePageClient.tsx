@@ -29,8 +29,8 @@ const footerLinks = [
   { title: "FUKU ICONS", links: ["一般エントリー", "推しを推薦", "表紙投票"] },
 ];
 
-export default function HomePageClient() {
-  const [cms, setCms] = useState<HomeCmsData>(() => getDefaultHomeCmsData());
+export default function HomePageClient({ initialCms }: { initialCms?: HomeCmsData }) {
+  const [cms, setCms] = useState<HomeCmsData>(() => initialCms ?? getDefaultHomeCmsData());
 
   useEffect(() => {
     let mounted = true;

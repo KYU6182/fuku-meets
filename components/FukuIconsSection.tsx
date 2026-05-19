@@ -1,8 +1,8 @@
 "use client";
 
-import { ArrowRight, Bookmark, Heart, MapPin, Sparkles, UserPlus, Users, Vote } from "lucide-react";
+import { ArrowRight, Heart, MapPin } from "lucide-react";
 import { useEffect, useState } from "react";
-import ActionCard from "./ActionCard";
+import IconVoteButton from "./IconVoteButton";
 import type { HomeCmsData } from "@/types/cms";
 
 type IconData = {
@@ -19,9 +19,9 @@ type FukuIconsSectionProps = {
 };
 
 const defaultRanking = [
-  { rank: 1, name: "YUI", genre: "model / creator", area: "天神エリア", votes: "2,430票", image: "/images/icons/yui.jpg", href: "/icons/yui", profile: "福岡から全国へ。いま注目したい次世代アイコン。", attentionScore: "98.7" },
-  { rank: 2, name: "RENA", genre: "model", area: "大名エリア", votes: "1,982票", image: "/images/icons/rena.jpg", href: "/icons/rena", profile: "", attentionScore: "95.4" },
-  { rank: 3, name: "ANNA", genre: "model", area: "天神エリア", votes: "1,540票", image: "/images/icons/anna.jpg", href: "/icons/anna", profile: "", attentionScore: "91.2" },
+  { rank: 1, name: "YUI", genre: "model / creator", area: "天神エリア", votes: "2,430票", votesNumber: 2430, image: "/images/icons/yui.jpg", href: "/icons/yui", slug: "yui", profile: "福岡から全国へ。いま注目したい次世代アイコン。", attentionScore: "98.7" },
+  { rank: 2, name: "RENA", genre: "model", area: "大名エリア", votes: "1,982票", votesNumber: 1982, image: "/images/icons/rena.jpg", href: "/icons/rena", slug: "rena", profile: "", attentionScore: "95.4" },
+  { rank: 3, name: "ANNA", genre: "model", area: "天神エリア", votes: "1,540票", votesNumber: 1540, image: "/images/icons/anna.jpg", href: "/icons/anna", slug: "anna", profile: "", attentionScore: "91.2" },
 ];
 
 type ApiIcon = {
@@ -33,23 +33,44 @@ type ApiIcon = {
   avatarUrl?: string;
   profile?: string;
   votes?: number | string;
+  supportCount?: number | string;
   rank?: number;
   attentionScore?: number | string;
+  updatedAt?: string;
+  createdAt?: string;
 };
+
+type RankedIcon = (typeof defaultRanking)[number];
+
+function rerankIcons(items: RankedIcon[]) {
+  return [...items]
+    .sort((a, b) => b.votesNumber - a.votesNumber || a.name.localeCompare(b.name))
+    .map((item, index) => ({
+      ...item,
+      rank: index + 1,
+      votes: `${item.votesNumber.toLocaleString("ja-JP")}票`,
+    }));
+}
 
 function normalizeIcons(items: ApiIcon[]) {
   if (!items.length) return defaultRanking;
-  return items.slice(0, 3).map((item, index) => ({
-    rank: Number(item.rank || index + 1),
-    name: item.name || "NO NAME",
-    genre: item.category || "creator",
-    area: item.area || "福岡エリア",
-    votes: `${Number(item.votes ?? 0).toLocaleString("ja-JP")}票`,
-    image: item.image || item.avatarUrl || "/images/icons/yui.jpg",
-    href: `/icons/${item.slug || item.name || index + 1}`,
-    profile: item.profile,
-    attentionScore: item.attentionScore,
-  }));
+  return rerankIcons(
+    items
+      .map((item, index) => ({
+        rank: index + 1,
+        name: item.name || "NO NAME",
+        genre: item.category || "creator",
+        area: item.area || "福岡エリア",
+        votes: "",
+        votesNumber: Number(item.votes ?? item.supportCount ?? 0),
+        image: item.image || item.avatarUrl || "/images/icons/yui.jpg",
+        href: `/icons/${item.slug || item.name || index + 1}`,
+        slug: item.slug || String(item.name || index + 1),
+        profile: item.profile,
+        attentionScore: item.attentionScore,
+      }))
+      .slice(0, 6),
+  ).slice(0, 3);
 }
 
 const badgeClass: Record<number, string> = {
@@ -57,15 +78,6 @@ const badgeClass: Record<number, string> = {
   2: "bg-[#9ca3af]",
   3: "bg-[#c9824a]",
 };
-
-function SmallIconButton({ icon: Icon, label, href }: { icon: typeof Heart; label: string; href: string }) {
-  return (
-    <a href={href} className="grid min-w-0 place-items-center gap-1 rounded-[10px] border border-fuku-border bg-white px-1 py-2 text-[8px] font-black text-fuku-black">
-      <Icon size={15} />
-      <span className="leading-none">{label}</span>
-    </a>
-  );
-}
 
 export default function FukuIconsSection({ cms }: FukuIconsSectionProps) {
   const [ranking, setRanking] = useState(() => normalizeIcons([]));
@@ -87,6 +99,18 @@ export default function FukuIconsSection({ cms }: FukuIconsSectionProps) {
 
   if (cms?.isVisible === false) return null;
   const weekly = ranking[0];
+
+  function updateVotes(slug: string, nextVotes?: number) {
+    setRanking((current) =>
+      rerankIcons(
+        current.map((person) =>
+          person.slug === slug
+            ? { ...person, votesNumber: nextVotes ?? person.votesNumber + 1 }
+            : person,
+        ),
+      ),
+    );
+  }
 
   return (
     <section className="mt-8 border-y border-fuku-border bg-white px-5 py-8">
@@ -111,7 +135,6 @@ export default function FukuIconsSection({ cms }: FukuIconsSectionProps) {
                 <h3 className="headline-condensed text-[42px] uppercase leading-none text-fuku-black">{weekly.name}</h3>
                 <p className="mt-1 text-[12px] font-black text-fuku-gray">{weekly.genre}</p>
               </div>
-              <span className="rounded-full bg-[#efe7df] px-4 py-2 text-[11px] font-black text-fuku-black">RANK {weekly.rank}</span>
             </div>
             <p className="mt-3 text-[13px] font-black leading-relaxed text-fuku-black">
               {weekly.profile || "福岡から全国へ。いま注目したい次世代アイコン。"}
@@ -123,10 +146,11 @@ export default function FukuIconsSection({ cms }: FukuIconsSectionProps) {
             </div>
             <div className="mt-4 grid grid-cols-2 gap-2">
               <a href={weekly.href} className="flex min-h-[42px] items-center justify-center rounded-[9px] bg-fuku-red text-[12px] font-black text-white">プロフィールを見る</a>
-              <a href={weekly.href} className="flex min-h-[42px] items-center justify-center gap-2 rounded-[9px] border border-fuku-red text-[12px] font-black text-fuku-red">
-                <Heart size={16} />
-                応援する
-              </a>
+              <IconVoteButton
+                slug={weekly.slug}
+                className="min-h-[42px] rounded-[9px] border border-fuku-red bg-white px-3 text-[12px] text-fuku-red"
+                onVoted={(payload) => updateVotes(weekly.slug, payload?.votes)}
+              />
             </div>
           </div>
         </div>
@@ -147,10 +171,15 @@ export default function FukuIconsSection({ cms }: FukuIconsSectionProps) {
             <p className="mt-1 text-[9px] font-black leading-tight text-fuku-gray">{person.genre}</p>
             <p className="mt-1 text-[9px] font-black text-fuku-gray">{person.area}</p>
             <p className="mt-1 text-[10px] font-black text-fuku-black">{person.votes}</p>
-            <div className="mt-2 grid grid-cols-3 gap-1">
-              <SmallIconButton icon={UserPlus} label="フォロー" href={person.href} />
-              <SmallIconButton icon={Bookmark} label="保存" href={person.href} />
-              <SmallIconButton icon={Heart} label="応援" href={person.href} />
+            <div className="mt-2 grid gap-1">
+              <IconVoteButton
+                slug={person.slug}
+                className="min-h-[34px] rounded-[8px] px-2 text-[10px]"
+                onVoted={(payload) => updateVotes(person.slug, payload?.votes)}
+              />
+              <a href={person.href} className="flex min-h-[32px] items-center justify-center rounded-[8px] border border-fuku-border text-[10px] font-black text-fuku-black">
+                プロフィール
+              </a>
             </div>
           </article>
         ))}
@@ -166,11 +195,6 @@ export default function FukuIconsSection({ cms }: FukuIconsSectionProps) {
         </span>
       </a>
 
-      <div className="mt-4 grid grid-cols-3 gap-2">
-        <ActionCard icon={Sparkles} title="一般エントリー" caption="自分で応募" href="/forms/icon-entry" />
-        <ActionCard icon={Users} title="推しを推薦" caption="友だちを推す" href="/forms/icon-recommend" />
-        <ActionCard icon={Vote} title="表紙投票" caption="次号を選ぶ" href="/icons/cover-vote" />
-      </div>
     </section>
   );
 }

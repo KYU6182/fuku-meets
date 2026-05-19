@@ -19,9 +19,9 @@ const subtitleSizeClass: Record<HeroSlide["subtitleFontSize"], string> = {
 };
 
 const heightClass: Record<HomeCmsData["hero"]["height"], string> = {
-  compact: "min-h-[320px]",
-  standard: "min-h-[386px]",
-  large: "min-h-[460px]",
+  compact: "min-h-[390px]",
+  standard: "min-h-[450px]",
+  large: "min-h-[520px]",
 };
 
 const radiusClass: Record<NonNullable<HeroSlide["cornerRadius"]>, string> = {

@@ -66,11 +66,16 @@ export async function GET(request: Request, context: RouteContext) {
   }
 
   if (kind === "icons") {
-    let query = supabase.from("icons").select("*").eq("status", "published").order("rank", { ascending: true, nullsFirst: false });
+    let query = supabase.from("icons").select("*").eq("status", "published");
     if (slug) query = query.eq("slug", slug);
     const { data, error } = await query;
     if (error) return Response.json({ items: fallback(kind), source: "fallback", error: error.message }, { headers: { "cache-control": "no-store" } });
-    return Response.json({ items: (data ?? []).map((row) => ({
+    const sortedIcons = [...(data ?? [])].sort((a, b) => {
+      const byVotes = Number(b.votes ?? b.support_count ?? 0) - Number(a.votes ?? a.support_count ?? 0);
+      if (byVotes !== 0) return byVotes;
+      return String(b.updated_at ?? b.created_at ?? "").localeCompare(String(a.updated_at ?? a.created_at ?? ""));
+    });
+    return Response.json({ items: sortedIcons.map((row, index) => ({
       ...(row.content || {}),
       id: row.id,
       slug: row.slug,
@@ -84,7 +89,7 @@ export async function GET(request: Request, context: RouteContext) {
       instagram: row.instagram,
       votes: row.votes,
       supportCount: row.support_count,
-      rank: row.rank,
+      rank: index + 1,
       attention: row.attention_score ? `${row.attention_score}%` : "88.0%",
       copy: row.profile_text,
       profileText: row.profile_text,
@@ -102,27 +107,36 @@ export async function GET(request: Request, context: RouteContext) {
 
   const themeIds = (themes ?? []).map((theme) => theme.id);
   const { data: entries, error: entriesError } = themeIds.length
-    ? await supabase.from("ranking_entries").select("*").eq("status", "published").in("ranking_id", themeIds).order("rank", { ascending: true })
+    ? await supabase.from("ranking_entries").select("*").eq("status", "published").in("ranking_id", themeIds)
     : { data: [], error: null };
   if (entriesError) return Response.json({ items: fallback(kind), source: "fallback", error: entriesError.message }, { headers: { "cache-control": "no-store" } });
 
   return Response.json({
-    items: (themes ?? []).map((theme) => ({
-      ...(theme.content || {}),
-      id: theme.id,
-      slug: theme.slug,
-      title: theme.title,
-      category: String(theme.category || "daily").toLowerCase(),
-      description: theme.description,
-      period: [theme.period_start, theme.period_end].filter(Boolean).join(" - "),
-      image: theme.thumbnail_url,
-      top3: (entries ?? []).filter((entry) => entry.ranking_id === theme.id).slice(0, 3).map((entry) => entry.name),
-      entries: (entries ?? [])
+    items: (themes ?? []).map((theme) => {
+      const sortedEntries = (entries ?? [])
         .filter((entry) => entry.ranking_id === theme.id)
-        .map((entry) => ({
+        .sort((a, b) => {
+          const byVotes = Number(b.votes ?? 0) - Number(a.votes ?? 0);
+          if (byVotes !== 0) return byVotes;
+          const byOrder = Number(a.display_order ?? a.rank ?? 9999) - Number(b.display_order ?? b.rank ?? 9999);
+          if (byOrder !== 0) return byOrder;
+          return String(b.updated_at ?? b.created_at ?? "").localeCompare(String(a.updated_at ?? a.created_at ?? ""));
+        });
+      return {
+        ...(theme.content || {}),
+        id: theme.id,
+        slug: theme.slug,
+        title: theme.title,
+        category: String(theme.category || "daily").toLowerCase(),
+        description: theme.description,
+        period: [theme.period_start, theme.period_end].filter(Boolean).join(" - "),
+        image: theme.thumbnail_url,
+        top3: sortedEntries.slice(0, 3).map((entry) => entry.name),
+        entries: sortedEntries
+          .map((entry, index) => ({
           ...(entry.content || {}),
           id: entry.id,
-          rank: entry.rank,
+          rank: index + 1,
           slug: entry.slug,
           name: entry.name,
           area: entry.area,
@@ -134,7 +148,8 @@ export async function GET(request: Request, context: RouteContext) {
           heroImageUrl: entry.hero_image_url,
           pickedComments: (entry.content?.pickedComments as string[] | undefined) ?? [],
         })),
-    })),
+      };
+    }),
     source: "supabase",
   }, { headers: { "cache-control": "no-store" } });
 }
