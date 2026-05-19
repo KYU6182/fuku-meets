@@ -31,7 +31,7 @@ export default function FukuIconsSection({ iconsData }: FukuIconsSectionProps) {
       </div>
 
       <a
-        href="#"
+        href="/icons"
         className="flex min-h-[92px] items-center gap-4 rounded-[10px] border border-fuku-border bg-white p-3 shadow-soft"
       >
         <div className="flex w-[88px] shrink-0 -space-x-8">
@@ -57,9 +57,9 @@ export default function FukuIconsSection({ iconsData }: FukuIconsSectionProps) {
       </a>
 
       <div className="mt-4 grid grid-cols-3 gap-2">
-        <ActionCard icon={Sparkles} title="一般エントリー" caption="自分で応募" />
-        <ActionCard icon={HeartHandshake} title="推しを推薦" caption="友だちを推す" />
-        <ActionCard icon={Vote} title="表紙投票" caption="次号を選ぶ" />
+        <ActionCard icon={Sparkles} title="一般エントリー" caption="自分で応募" href="/forms/icon-entry" />
+        <ActionCard icon={HeartHandshake} title="推しを推薦" caption="友だちを推す" href="/forms/icon-recommend" />
+        <ActionCard icon={Vote} title="表紙投票" caption="次号を選ぶ" href="/icons/cover-vote" />
       </div>
     </section>
   );
