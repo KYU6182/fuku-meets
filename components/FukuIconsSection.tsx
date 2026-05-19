@@ -39,6 +39,7 @@ type ApiIcon = {
   area?: string;
   image?: string;
   avatarUrl?: string;
+  heroImageUrl?: string;
   profile?: string;
   votes?: number | string;
   supportCount?: number | string;
@@ -68,7 +69,7 @@ function normalizeIcons(items: ApiIcon[]) {
         area: item.area || "福岡エリア",
         votes: "",
         votesNumber: Number(item.votes ?? item.supportCount ?? 0),
-        image: item.image || item.avatarUrl || "/images/icons/yui.jpg",
+        image: item.avatarUrl || item.image || item.heroImageUrl || "/images/icons/yui.jpg",
         href: `/icons/${item.slug || item.name || index + 1}`,
         slug: item.slug || String(item.name || index + 1),
         profile: item.profile,
@@ -134,13 +135,17 @@ export default function FukuIconsSection({ cms }: FukuIconsSectionProps) {
         </div>
       ) : (
       <>
-      <article className="mt-5 overflow-hidden rounded-[16px] border border-fuku-border bg-white p-4 shadow-soft">
+      <article className="mt-5 overflow-hidden rounded-[18px] border border-fuku-border bg-white p-4 shadow-soft">
         <div className="flex items-center gap-2">
           <p className="headline-condensed text-[24px] uppercase leading-none text-fuku-black">WEEKLY ICON</p>
           <span className="rounded-full border border-fuku-red px-2 py-1 text-[10px] font-black text-fuku-red">今週の注目アイコン</span>
         </div>
-        <div className="mt-4 grid gap-4 min-[390px]:grid-cols-[150px_1fr]">
-          <a href={weekly.href} className="block aspect-[4/3] rounded-[12px] bg-fuku-light bg-cover bg-center" style={{ backgroundImage: `url('${weekly.image}')` }} />
+        <div className="mt-4 grid gap-4 min-[390px]:grid-cols-[1.03fr_.97fr]">
+          <a
+            href={weekly.href}
+            className="block min-h-[300px] rounded-[14px] bg-fuku-light bg-cover bg-center"
+            style={{ backgroundImage: `linear-gradient(135deg, rgba(255,255,255,.08), rgba(17,17,17,.08)), url('${weekly.image}')`, backgroundPosition: "center top" }}
+          />
           <div>
             <div className="flex items-start justify-between gap-2">
               <div>
@@ -157,10 +162,11 @@ export default function FukuIconsSection({ cms }: FukuIconsSectionProps) {
               <span>投票数<br />{weekly.votes.replace("票", "")}</span>
             </div>
             <div className="mt-4 grid grid-cols-2 gap-2">
-              <a href={weekly.href} className="flex min-h-[42px] items-center justify-center rounded-[9px] bg-fuku-red text-[12px] font-black text-white">プロフィールを見る</a>
+              <a href={weekly.href} className="flex min-h-[52px] items-center justify-center whitespace-nowrap rounded-[10px] bg-fuku-red px-2 text-[12px] font-black text-white">プロフィールを見る</a>
               <IconVoteButton
                 slug={weekly.slug}
-                className="min-h-[42px] rounded-[9px] border border-fuku-red bg-white px-3 text-[12px] text-fuku-red"
+                variant="outline"
+                className="min-h-[52px] rounded-[10px] px-2 text-[12px]"
                 onVoted={(payload) => updateVotes(weekly.slug, payload?.votes)}
               />
             </div>

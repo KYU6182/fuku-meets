@@ -10,11 +10,13 @@ export default function IconVoteButton({
   slug,
   mode = "support",
   className = "",
+  variant = "solid",
   onVoted,
 }: {
   slug: string;
   mode?: "support" | "cover";
   className?: string;
+  variant?: "solid" | "outline";
   onVoted?: (payload?: { votes?: number; supportCount?: number }) => void;
 }) {
   const [done, setDone] = useState(false);
@@ -57,17 +59,26 @@ export default function IconVoteButton({
     }
   }
 
+  const baseClass = className || "min-h-[44px] rounded-full px-5 text-[13px]";
+  const visualClass =
+    variant === "outline"
+      ? done
+        ? "border border-fuku-border bg-white text-fuku-gray"
+        : "border border-fuku-red bg-white text-fuku-red"
+      : done
+        ? "border border-fuku-border bg-white text-fuku-gray"
+        : "bg-fuku-red text-white";
+  const heartFill = variant === "outline" || done ? "none" : "#fff";
+
   return (
     <>
       <button
         type="button"
         onClick={vote}
         disabled={done || loading}
-        className={`${className || "min-h-[44px] rounded-full px-5 text-[13px]"} inline-flex items-center justify-center gap-2 font-black ${
-          done ? "border border-fuku-border bg-white text-fuku-gray" : "bg-fuku-red text-white"
-        }`}
+        className={`${baseClass} inline-flex items-center justify-center gap-2 whitespace-nowrap font-black ${visualClass}`}
       >
-        <Heart size={16} fill={done ? "none" : "#fff"} />
+        <Heart size={16} fill={heartFill} />
         {loading ? "送信中" : mode === "cover" ? (done ? "本日投票済み" : "表紙に投票") : done ? "応援済み" : "応援する"}
       </button>
       {limit ? (

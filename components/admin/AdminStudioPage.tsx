@@ -6,6 +6,7 @@ import AdminLayout from "./AdminLayout";
 import AdminStatusBadge from "./AdminStatusBadge";
 import DirectImageUploader from "./DirectImageUploader";
 import FvSlideEditor from "./FvSlideEditor";
+import Footer from "../Footer";
 import FukuIconsSection from "../FukuIconsSection";
 import HeroSection from "../HeroSection";
 import HomeFollowUsSection from "../HomeFollowUsSection";
@@ -752,14 +753,17 @@ function StudioPreview({
         </div>
         <div className="max-h-[720px] overflow-y-auto bg-white pb-6">
           {selectedPage === "home" ? (
-            homeDraft.sectionOrder.map((sectionId) => {
-              if (!homeDraft[sectionId].isVisible) return null;
-              return (
-                <div key={sectionId} role="button" tabIndex={0} onClick={() => onSelectHomeSection(sectionId)} className={`block border-2 transition ${selectedHomeSectionId === sectionId ? "border-fuku-red" : "border-transparent"}`}>
-                  {renderHomePreviewSection(sectionId, homeDraft)}
-                </div>
-              );
-            })
+            <>
+              {homeDraft.sectionOrder.map((sectionId) => {
+                if (!homeDraft[sectionId].isVisible) return null;
+                return (
+                  <div key={sectionId} role="button" tabIndex={0} onClick={() => onSelectHomeSection(sectionId)} className={`block border-2 transition ${selectedHomeSectionId === sectionId ? "border-fuku-red" : "border-transparent"}`}>
+                    {renderHomePreviewSection(sectionId, homeDraft)}
+                  </div>
+                );
+              })}
+              <Footer />
+            </>
           ) : (
             getGenericSections(selectedPage).map((section) => (
               <div key={section.id} role="button" tabIndex={0} onClick={() => onSelectGenericSection(section.id)} className={`border-2 px-5 py-5 ${selectedGenericSection === section.id ? "border-fuku-red" : "border-transparent"}`}>
@@ -820,10 +824,11 @@ function getGenericSections(page: StudioPage) {
     return [
       { id: "hero", label: "Hero" },
       { id: "weekly", label: "Weekly Icon" },
+      { id: "tabs", label: "Category Tabs" },
       { id: "ranking", label: "Icons Ranking" },
-      { id: "cover", label: "Cover Ranking" },
-      { id: "entry", label: "Entry CTA" },
-      { id: "recommend", label: "Recommend CTA" },
+      { id: "newFace", label: "New Face" },
+      { id: "spots", label: "Icons Spots" },
+      { id: "comments", label: "Comments" },
     ];
   }
   return [

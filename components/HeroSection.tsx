@@ -19,9 +19,9 @@ const subtitleSizeClass: Record<HeroSlide["subtitleFontSize"], string> = {
 };
 
 const heightClass: Record<HomeCmsData["hero"]["height"], string> = {
-  compact: "min-h-[390px]",
-  standard: "min-h-[450px]",
-  large: "min-h-[520px]",
+  compact: "min-h-[500px]",
+  standard: "min-h-[570px]",
+  large: "min-h-[640px]",
 };
 
 const radiusClass: Record<NonNullable<HeroSlide["cornerRadius"]>, string> = {
@@ -60,8 +60,8 @@ export default function HeroSection({ cms, hero }: { cms?: HomeCmsData["hero"]; 
   const alignment = slide.align === "center" ? "items-center text-center" : "items-start text-left";
   const justify = slide.align === "center" ? "justify-center" : "justify-end";
   const backgroundImage = slide.image
-    ? `linear-gradient(180deg, rgba(17,17,17,0.08) 0%, rgba(17,17,17,0.24) 42%, ${slide.overlayColor} 100%), url('${slide.image}')`
-    : `linear-gradient(135deg, ${slide.backgroundColor ?? "#111111"}, #3b0f0f)`;
+    ? `linear-gradient(180deg, rgba(17,17,17,0.12) 0%, rgba(17,17,17,0.34) 44%, ${slide.overlayColor || "rgba(17,17,17,0.82)"} 100%), url('${slide.image}')`
+    : "linear-gradient(180deg, rgba(17,17,17,0.1), rgba(17,17,17,0.86)), linear-gradient(135deg, #1b1b1b, #4f1717)";
 
   function move(direction: "prev" | "next") {
     setActiveIndex((current) => {
@@ -73,25 +73,25 @@ export default function HeroSection({ cms, hero }: { cms?: HomeCmsData["hero"]; 
   return (
     <section className="px-4 pt-4">
       <div
-        className={`relative overflow-hidden bg-cover bg-center shadow-soft ${minHeight} ${radiusClass[slide.cornerRadius ?? "medium"]}`}
-        style={{ backgroundImage, backgroundColor: slide.backgroundColor ?? "#111111" }}
+        className={`relative overflow-hidden bg-cover shadow-soft ${minHeight} ${radiusClass[slide.cornerRadius ?? "large"]}`}
+        style={{ backgroundImage, backgroundColor: slide.backgroundColor ?? "#111111", backgroundPosition: "center top" }}
       >
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_18%,rgba(255,255,255,0.16),transparent_16rem)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_78%_16%,rgba(255,255,255,0.12),transparent_17rem)]" />
         <div className={`relative z-10 flex ${minHeight} flex-col ${justify} ${alignment} ${spacingClass[slide.spacing ?? "standard"]}`}>
-          <span className="mb-4 w-fit rounded-[4px] bg-fuku-red px-3 py-1 text-[11px] font-black tracking-widest text-white">
+          <span className="mb-4 w-fit rounded-[6px] bg-fuku-red px-3 py-1 text-[11px] font-black tracking-widest text-white">
             {slide.label}
           </span>
-          <h1 className={`${titleSizeClass[slide.titleFontSize]} whitespace-pre-line font-black leading-[1.22] tracking-wide`} style={{ color: slide.textColor }}>
+          <h1 className={`${titleSizeClass[slide.titleFontSize]} whitespace-pre-line font-black leading-[1.12] tracking-wide drop-shadow-[0_2px_12px_rgba(0,0,0,0.24)]`} style={{ color: slide.textColor }}>
             {slide.title}
           </h1>
-          <p className={`${subtitleSizeClass[slide.subtitleFontSize]} mt-3 max-w-[310px] whitespace-pre-line font-bold leading-relaxed`} style={{ color: slide.textColor }}>
+          <p className={`${subtitleSizeClass[slide.subtitleFontSize]} mt-4 max-w-[310px] whitespace-pre-line font-bold leading-relaxed drop-shadow-[0_2px_8px_rgba(0,0,0,0.28)]`} style={{ color: slide.textColor }}>
             {slide.subtitle}
           </p>
-          <div className={`mt-5 flex w-full flex-wrap items-center gap-3 ${slide.align === "center" ? "justify-center" : "justify-between"}`}>
-            <div className="flex flex-wrap gap-2">
+          <div className={`mt-7 flex w-full flex-col gap-5 ${slide.align === "center" ? "items-center" : "items-start"}`}>
+            <div className="grid w-full max-w-[310px] gap-3">
               <a
                 href={slide.ctaHref}
-                className="inline-flex min-h-[46px] items-center gap-3 rounded-full px-5 text-[13px] font-black tracking-wide"
+                className="inline-flex min-h-[54px] items-center justify-center gap-3 rounded-full px-5 text-[13px] font-black tracking-wide shadow-[0_14px_34px_rgba(229,36,33,0.28)]"
                 style={{ backgroundColor: slide.buttonColor, color: slide.buttonTextColor }}
               >
                 {slide.ctaText}
@@ -100,27 +100,29 @@ export default function HeroSection({ cms, hero }: { cms?: HomeCmsData["hero"]; 
               {slide.id === "hero-1" ? (
                 <a
                   href="/start-guide"
-                  className="inline-flex min-h-[46px] items-center gap-3 rounded-full border border-fuku-black bg-white px-5 text-[13px] font-black tracking-wide text-fuku-black"
+                  className="inline-flex min-h-[54px] items-center justify-center gap-3 rounded-full bg-white px-5 text-[13px] font-black tracking-wide text-fuku-black"
                 >
                   初めての方へ
                   <ArrowRight size={17} />
                 </a>
               ) : null}
             </div>
-            <p className="text-[13px] font-black tracking-widest" style={{ color: slide.textColor }}>
-              {activeIndex + 1} / {slides.length}
-            </p>
-          </div>
-          <div className={`mt-6 flex gap-2 ${slide.align === "center" ? "justify-center" : ""}`}>
-            {slides.map((dot, index) => (
-              <button
-                key={dot.id}
-                type="button"
-                onClick={() => setActiveIndex(index)}
-                aria-label={`${index + 1}枚目のFVを見る`}
-                className={`h-2 rounded-full ${index === activeIndex ? "w-7 bg-white" : "w-2 bg-white/[0.55]"}`}
-              />
-            ))}
+            <div className={`flex w-full items-center gap-3 ${slide.align === "center" ? "justify-center" : ""}`}>
+              <p className="text-[13px] font-black tracking-widest" style={{ color: slide.textColor }}>
+                {activeIndex + 1} / {slides.length}
+              </p>
+              <div className="flex gap-2">
+                {slides.map((dot, index) => (
+                  <button
+                    key={dot.id}
+                    type="button"
+                    onClick={() => setActiveIndex(index)}
+                    aria-label={`${index + 1}枚目のFVを見る`}
+                    className={`h-2 rounded-full ${index === activeIndex ? "w-8 bg-white" : "w-2 bg-white/[0.55]"}`}
+                  />
+                ))}
+              </div>
+            </div>
           </div>
         </div>
         {slides.length > 1 ? (

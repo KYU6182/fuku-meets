@@ -1,26 +1,12 @@
 "use client";
 
-import {
-  ArrowRight,
-  Bookmark,
-  Crown,
-  Flame,
-  Heart,
-  MapPin,
-  Megaphone,
-  Quote,
-  Sparkles,
-  UserPlus,
-  Users,
-} from "lucide-react";
+import { MapPin, Quote, UserRound, Users } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import BottomNav from "./BottomNav";
 import Header from "./Header";
-import { addToLocalList, useToast } from "./Toast";
-import IconActionButtons from "./IconActionButtons";
+import IconVoteButton from "./IconVoteButton";
+import { useToast } from "./Toast";
 import { getDefaultIconsCmsData, getPublishedIconsAsync } from "@/lib/cms";
-import { supportIcon } from "@/lib/iconVoteSystem";
-import { storageKeys } from "@/lib/storageKeys";
 import type { IconsCmsData } from "@/types/cms";
 
 type IconPerson = {
@@ -35,158 +21,30 @@ type IconPerson = {
   heroImage?: string;
   profile?: string;
   attention?: string;
+  createdAt?: string;
+  updatedAt?: string;
 };
 
-type NewFace = {
-  name: string;
-  category: string;
-  area: string;
-  image: string;
-};
+type ApiIcon = Record<string, unknown>;
 
-type IconSpot = {
-  title: string;
-  description: string;
-  area: string;
-  image: string;
-};
+const categoryTabs = ["すべて", "モデル", "美容師", "DJ", "アーティスト", "インフルエンサー", "クリエイター", "学生"];
 
-const categoryTabs = [
-  "すべて",
-  "モデル",
-  "美容師",
-  "DJ",
-  "アーティスト",
-  "インフルエンサー",
-  "クリエイター",
-  "学生",
-];
-
-const iconsRanking: IconPerson[] = [
+const iconSpots = [
   {
-    rank: 1,
-    name: "YUI",
-    slug: "yui",
-    category: "model / creator",
-    tab: "モデル",
-    area: "天神エリア",
-    votes: 2430,
-    image: "/images/icons/yui.jpg",
-  },
-  {
-    rank: 2,
-    name: "RENA",
-    slug: "rena",
-    category: "model",
-    tab: "モデル",
-    area: "大名エリア",
-    votes: 1982,
-    image: "/images/icons/rena.jpg",
-  },
-  {
-    rank: 3,
-    name: "ANNA",
-    slug: "anna",
-    category: "model",
-    tab: "モデル",
-    area: "天神エリア",
-    votes: 1540,
-    image: "/images/icons/anna.jpg",
-  },
-  {
-    rank: 4,
-    name: "MIO",
-    slug: "mio",
-    category: "model",
-    tab: "モデル",
-    area: "薬院エリア",
-    votes: 1322,
-    image: "/images/icons/mio.jpg",
-  },
-  {
-    rank: 5,
-    name: "SORA",
-    slug: "sora",
-    category: "美容師 / creator",
-    tab: "美容師",
-    area: "大名エリア",
-    votes: 1108,
-    image: "/images/icons/sora.jpg",
-  },
-  {
-    rank: 6,
-    name: "KEITA",
-    slug: "keita",
-    category: "DJ / producer",
-    tab: "DJ",
-    area: "中洲エリア",
-    votes: 987,
-    image: "/images/icons/keita.jpg",
-  },
-  {
-    rank: 7,
-    name: "AOI",
-    slug: "aoi",
-    category: "artist",
-    tab: "アーティスト",
-    area: "今泉エリア",
-    votes: 842,
-    image: "/images/icons/aoi.jpg",
-  },
-  {
-    rank: 8,
-    name: "RINA",
-    slug: "rina",
-    category: "influencer",
-    tab: "インフルエンサー",
-    area: "天神エリア",
-    votes: 790,
-    image: "/images/icons/rina.jpg",
-  },
-  {
-    rank: 9,
-    name: "KENTO",
-    slug: "kento",
-    category: "creator",
-    tab: "クリエイター",
-    area: "大名エリア",
-    votes: 734,
-    image: "/images/icons/kento.jpg",
-  },
-  {
-    rank: 10,
-    name: "NANA",
-    slug: "nana",
-    category: "student creator",
-    tab: "学生",
-    area: "六本松エリア",
-    votes: 688,
-    image: "/images/icons/nana.jpg",
-  },
-];
-
-const newFaces: NewFace[] = [
-  { name: "HARU", category: "モデル", area: "薬院エリア", image: "/images/icons/haru.jpg" },
-  { name: "KENTO", category: "クリエイター", area: "大名エリア", image: "/images/icons/kento.jpg" },
-  { name: "RINA", category: "インフルエンサー", area: "天神エリア", image: "/images/icons/rina.jpg" },
-];
-
-const iconSpots: IconSpot[] = [
-  {
-    title: "YUIが通う薬院カフェ",
+    title: "ICONSが通う薬院カフェ",
     description: "こだわりのラテと居心地のよい空間。",
     area: "薬院エリア",
     image: "/images/spots/cafe-yakuin.jpg",
   },
   {
-    title: "RENAが行く大名の美容室",
-    description: "デザインカラーが得意な人気サロン。",
+    title: "大名のヘアサロン",
+    description: "撮影前にも立ち寄りやすい人気サロン。",
     area: "大名エリア",
     image: "/images/spots/salon-daimyo.jpg",
   },
   {
-    title: "KEITA出演のクラブイベント",
-    description: "福岡の夜を熱くする人気パーティー。",
+    title: "中洲の音楽イベント",
+    description: "福岡の夜を熱くするローカルパーティー。",
     area: "中洲エリア",
     image: "/images/spots/club-nakasu.jpg",
   },
@@ -195,112 +53,149 @@ const iconSpots: IconSpot[] = [
 const comments = [
   {
     user: "@fuku_love",
-    text: "雰囲気が好き。自然体なのに芯があって、見ているだけで元気をもらえます！",
+    text: "自然体なのに芯があって、見ているだけで元気をもらえます！",
   },
   {
     user: "@tenjin_girl",
-    text: "福岡っぽい感性がある。トレンドをつくるのに、福岡らしさを大切にしているところが◎",
+    text: "福岡っぽい感性がある。福岡らしさを大切にしているところが◎",
   },
   {
     user: "@camera_lover",
-    text: "撮影の世界観がかっこいい。どの作品もセンスがあって、いつもチェックしています！",
+    text: "撮影の世界観がかっこいい。いつもチェックしています！",
   },
 ];
 
-function support(slug = "yui") {
-  const result = supportIcon(slug);
-  if (result.ok) addToLocalList(storageKeys.supportedIcons, slug);
-  showGlobalToast(result.message);
+function stringValue(value: unknown, fallback = "") {
+  return typeof value === "string" && value.trim() ? value : fallback;
 }
 
-function save() {
-  addToLocalList(storageKeys.savedIcons, "icons");
-  showGlobalToast("保存しました");
+function numberValue(value: unknown, fallback = 0) {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : fallback;
 }
 
-function follow() {
-  addToLocalList(storageKeys.followedIcons, "icons");
-  showGlobalToast("フォローしました");
+function dateValue(value: unknown) {
+  return typeof value === "string" ? value : "";
 }
 
-function showGlobalToast(message: string) {
-  if (typeof window === "undefined") return;
-  window.dispatchEvent(new CustomEvent("fuku-toast", { detail: message }));
+function sortIcons(items: IconPerson[]) {
+  return [...items]
+    .sort((a, b) => {
+      if (b.votes !== a.votes) return b.votes - a.votes;
+      const bTime = Date.parse(b.updatedAt || b.createdAt || "");
+      const aTime = Date.parse(a.updatedAt || a.createdAt || "");
+      if (Number.isFinite(bTime) && Number.isFinite(aTime) && bTime !== aTime) return bTime - aTime;
+      return a.name.localeCompare(b.name);
+    })
+    .map((item, index) => ({ ...item, rank: index + 1 }));
+}
+
+function normalizeIcons(items: ApiIcon[]) {
+  return sortIcons(
+    items.map((item, index) => {
+      const slug = stringValue(item.slug, stringValue(item.id, `${index + 1}`));
+      const category = stringValue(item.category, "creator");
+      const image =
+        stringValue(item.avatarUrl) ||
+        stringValue(item.avatar_url) ||
+        stringValue(item.profileImage) ||
+        stringValue(item.image) ||
+        stringValue(item.heroImageUrl) ||
+        stringValue(item.hero_image_url) ||
+        "/images/icons/yui.jpg";
+
+      return {
+        rank: index + 1,
+        slug,
+        name: stringValue(item.name, "NO NAME"),
+        category,
+        tab: category,
+        area: stringValue(item.area, "福岡エリア"),
+        votes: numberValue(item.supportCount, numberValue(item.support_count, numberValue(item.votes, 0))),
+        image,
+        heroImage: stringValue(item.heroImageUrl) || stringValue(item.hero_image_url) || image,
+        profile:
+          stringValue(item.profileText) ||
+          stringValue(item.profile_text) ||
+          stringValue(item.profile) ||
+          stringValue(item.copy) ||
+          "福岡から全国へ。いま注目したい次世代アイコン。",
+        attention: stringValue(item.attentionScore) || stringValue(item.attention_score) || "98.7%",
+        createdAt: dateValue(item.createdAt) || dateValue(item.created_at),
+        updatedAt: dateValue(item.updatedAt) || dateValue(item.updated_at),
+      };
+    }),
+  );
+}
+
+function formatVotes(votes: number) {
+  return votes.toLocaleString("ja-JP");
+}
+
+function updatePersonVotes(people: IconPerson[], slug: string, nextVotes?: number) {
+  return sortIcons(
+    people.map((person) =>
+      person.slug === slug
+        ? {
+            ...person,
+            votes: nextVotes ?? person.votes + 1,
+            updatedAt: new Date().toISOString(),
+          }
+        : person,
+    ),
+  );
 }
 
 function IconsHero({ cms }: { cms: IconsCmsData }) {
   return (
     <section className="border-b border-fuku-border bg-white px-5 py-8">
-      <h1 className="headline-condensed text-[58px] uppercase leading-[0.9] text-fuku-black">
-        {cms.title}
-      </h1>
-      <p className="mt-4 text-[17px] font-black leading-relaxed text-fuku-black">
-        {cms.subtitle}
-      </p>
-      <p className="mt-4 max-w-[350px] text-[13px] font-bold leading-relaxed text-fuku-black">
-        {cms.heroDescription}
-      </p>
+      <h1 className="headline-condensed text-[58px] uppercase leading-[0.9] text-fuku-black">{cms.title}</h1>
+      <p className="mt-4 text-[17px] font-black leading-relaxed text-fuku-black">{cms.subtitle}</p>
+      <p className="mt-4 max-w-[350px] text-[13px] font-bold leading-relaxed text-fuku-black">{cms.heroDescription}</p>
     </section>
   );
 }
 
-function WeeklyIconCard({ person }: { person: IconPerson }) {
+function WeeklyIconCard({ person, onVote }: { person: IconPerson; onVote: (slug: string, votes?: number) => void }) {
   return (
     <section className="bg-white px-4 py-6">
-      <article className="rounded-[16px] border border-fuku-border bg-white p-4 shadow-soft">
-        <div className="mb-3 flex items-center gap-2">
-          <h2 className="headline-condensed text-[27px] uppercase leading-none text-fuku-black">
-            WEEKLY ICON
-          </h2>
-          <span className="rounded-full border border-fuku-red px-3 py-1 text-[10px] font-black text-fuku-red">
-            今週の注目アイコン
-          </span>
+      <article className="rounded-[18px] border border-fuku-border bg-white p-4 shadow-soft">
+        <div className="mb-4 flex items-center gap-3">
+          <h2 className="headline-condensed text-[29px] uppercase leading-none text-fuku-black">WEEKLY ICON</h2>
+          <span className="rounded-full border border-fuku-red px-3 py-1 text-[10px] font-black text-fuku-red">今週の注目アイコン</span>
         </div>
-        <div className="grid gap-4 min-[390px]:grid-cols-[1.05fr_1fr]">
-          <div
-            className="min-h-[226px] rounded-[12px] bg-fuku-light bg-cover bg-center"
+        <div className="grid gap-4 min-[390px]:grid-cols-[1.08fr_.92fr]">
+          <a
+            href={`/icons/${person.slug}`}
+            className="min-h-[330px] rounded-[16px] bg-fuku-light bg-cover bg-center"
             style={{
-              backgroundImage: `linear-gradient(135deg, rgba(255,255,255,.08), rgba(17,17,17,.14)), url('${person.heroImage || person.image}')`,
+              backgroundImage: `linear-gradient(135deg, rgba(255,255,255,.08), rgba(17,17,17,.08)), url('${person.heroImage || person.image}')`,
+              backgroundPosition: "center top",
             }}
           />
           <div className="min-w-0">
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <h3 className="text-[34px] font-black leading-none text-fuku-black">{person.name}</h3>
-                <p className="mt-2 text-[13px] font-bold text-fuku-gray">{person.category}</p>
-              </div>
+            <h3 className="headline-condensed text-[48px] uppercase leading-none text-fuku-black">{person.name}</h3>
+            <p className="mt-2 text-[16px] font-black text-fuku-gray">{person.category}</p>
+            <p className="mt-5 text-[15px] font-black leading-relaxed text-fuku-black">{person.profile}</p>
+            <div className="mt-6 grid grid-cols-3 gap-2">
+              <Metric label="エリア" value={person.area.replace("エリア", "")} />
+              <Metric label="注目度" value={person.attention || "98.7%"} accent />
+              <Metric label="投票数" value={formatVotes(person.votes)} />
             </div>
-            <p className="mt-4 text-[14px] font-black leading-relaxed text-fuku-black">
-              {person.profile || "福岡で活動する注目のアイコン。"}
-            </p>
-            <div className="mt-4 grid grid-cols-3 gap-2">
-              {[
-                { label: "エリア", value: person.area.replace("エリア", ""), icon: MapPin },
-                { label: "注目度", value: person.attention || "-", icon: Flame },
-                { label: "投票数", value: person.votes.toLocaleString("ja-JP"), icon: Crown },
-              ].map(({ label, value, icon: Icon }) => (
-                <div key={label}>
-                  <Icon size={17} className="text-fuku-black" />
-                  <p className="mt-1 text-[10px] font-bold text-fuku-gray">{label}</p>
-                  <p className="text-[12px] font-black text-fuku-black">{value}</p>
-                </div>
-              ))}
-            </div>
-            <div className="mt-5 grid grid-cols-2 gap-2">
+            <div className="mt-6 grid grid-cols-2 gap-3">
               <a
                 href={`/icons/${person.slug}`}
-                className="flex min-h-[44px] items-center justify-center rounded-[8px] bg-fuku-red text-[13px] font-black text-white"
+                className="inline-flex min-h-[54px] items-center justify-center gap-2 whitespace-nowrap rounded-[10px] bg-fuku-red px-3 text-[13px] font-black text-white"
               >
+                <UserRound size={17} />
                 プロフィールを見る
               </a>
-              <button
-                type="button"
-                onClick={() => support(person.slug)}
-                className="flex min-h-[44px] items-center justify-center gap-2 rounded-[8px] border border-fuku-red bg-white text-[13px] font-black text-fuku-red"
-              >
-                <Heart size={17} />
-                応援する
-              </button>
+              <IconVoteButton
+                slug={person.slug}
+                variant="outline"
+                className="min-h-[54px] rounded-[10px] px-3 text-[13px]"
+                onVoted={(payload) => onVote(person.slug, payload?.supportCount ?? payload?.votes)}
+              />
             </div>
           </div>
         </div>
@@ -309,25 +204,26 @@ function WeeklyIconCard({ person }: { person: IconPerson }) {
   );
 }
 
-function IconCategoryTabs({
-  selectedCategory,
-  onSelect,
-}: {
-  selectedCategory: string;
-  onSelect: (category: string) => void;
-}) {
+function Metric({ label, value, accent = false }: { label: string; value: string; accent?: boolean }) {
   return (
-    <div className="bg-white px-4 pb-4">
-      <div className="no-scrollbar flex gap-2 overflow-x-auto">
-        {categoryTabs.map((tab) => (
+    <div>
+      <p className="text-[10px] font-black text-fuku-gray">{label}</p>
+      <p className={`mt-1 text-[14px] font-black ${accent ? "text-fuku-red" : "text-fuku-black"}`}>{value}</p>
+    </div>
+  );
+}
+
+function IconCategoryTabs({ selectedCategory, onSelect }: { selectedCategory: string; onSelect: (category: string) => void }) {
+  return (
+    <div className="bg-white px-4 pb-5">
+      <div className="no-scrollbar flex gap-3 overflow-x-auto">
+        {categoryTabs.slice(0, 5).map((tab) => (
           <button
             key={tab}
             type="button"
             onClick={() => onSelect(tab)}
-            className={`min-h-[40px] shrink-0 rounded-full border px-5 text-[12px] font-black ${
-              selectedCategory === tab
-                ? "border-fuku-red bg-fuku-red text-white"
-                : "border-fuku-border bg-white text-fuku-black"
+            className={`min-h-[48px] min-w-[108px] shrink-0 rounded-full border px-6 text-[14px] font-black ${
+              selectedCategory === tab ? "border-fuku-red bg-fuku-red text-white" : "border-fuku-border bg-white text-fuku-black"
             }`}
           >
             {tab}
@@ -342,127 +238,115 @@ function rankBadgeClass(rank: number) {
   if (rank === 1) return "bg-[#f5b400]";
   if (rank === 2) return "bg-[#9ca3af]";
   if (rank === 3) return "bg-[#c9824a]";
-  return "bg-fuku-light";
+  return "bg-fuku-black";
 }
 
-function TopIconCard({ person }: { person: IconPerson }) {
+function TopIconCard({ person, onVote }: { person: IconPerson; onVote: (slug: string, votes?: number) => void }) {
   return (
-    <article className="rounded-[12px] border border-fuku-border bg-white p-3">
-      <div className="relative text-center">
-        <span
-          className={`absolute -left-2 -top-2 z-10 grid h-7 w-7 place-items-center rounded-[5px] text-[13px] font-black text-white ${rankBadgeClass(
-            person.rank,
-          )}`}
-        >
+    <article className="min-w-[236px] overflow-hidden rounded-[14px] border border-fuku-border bg-white shadow-soft">
+      <div className="relative">
+        <span className={`absolute left-3 top-3 z-10 grid h-9 w-9 place-items-center rounded-[7px] text-[17px] font-black text-white ${rankBadgeClass(person.rank)}`}>
           {person.rank}
         </span>
         <a
           href={`/icons/${person.slug}`}
-          className="mx-auto h-20 w-20 rounded-full bg-fuku-light bg-cover bg-center"
+          className="block h-[180px] bg-fuku-light bg-cover bg-center"
           style={{
-            backgroundImage: `linear-gradient(135deg, rgba(255,255,255,.1), rgba(17,17,17,.12)), url('${person.image}')`,
+            backgroundImage: `linear-gradient(135deg, rgba(255,255,255,.08), rgba(17,17,17,.12)), url('${person.image}')`,
+            backgroundPosition: "center top",
           }}
         />
-        <a href={`/icons/${person.slug}`} className="mt-3 block text-[16px] font-black text-fuku-black">{person.name}</a>
-        <p className="mt-1 min-h-[28px] text-[10px] font-bold leading-snug text-fuku-black">
-          {person.category}
-        </p>
-        <p className="mt-1 text-[10px] font-bold text-fuku-gray">{person.area}</p>
-        <p className="mt-1 text-[12px] font-black text-fuku-black">
-          {person.votes.toLocaleString()}票
-        </p>
       </div>
-      <div className="mt-4">
-        <IconActionButtons slug={person.name.toLowerCase()} compact />
+      <div className="p-4">
+        <a href={`/icons/${person.slug}`} className="headline-condensed block text-[27px] uppercase leading-none text-fuku-black">
+          {person.name}
+        </a>
+        <p className="mt-1 text-[12px] font-black text-fuku-gray">{person.category}</p>
+        <p className="mt-3 inline-flex items-center gap-1 text-[12px] font-black text-fuku-gray">
+          <MapPin size={15} />
+          {person.area}
+        </p>
+        <p className="mt-2 text-[17px] font-black text-fuku-black">{formatVotes(person.votes)}票</p>
+        <div className="mt-4 grid gap-2">
+          <a
+            href={`/icons/${person.slug}`}
+            className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-[9px] bg-fuku-red px-3 text-[12px] font-black text-white"
+          >
+            <UserRound size={15} />
+            プロフィールを見る
+          </a>
+          <IconVoteButton
+            slug={person.slug}
+            variant="outline"
+            className="min-h-[44px] rounded-[9px] px-3 text-[12px]"
+            onVoted={(payload) => onVote(person.slug, payload?.supportCount ?? payload?.votes)}
+          />
+        </div>
       </div>
     </article>
   );
 }
 
-function RankingListRow({ person }: { person: IconPerson }) {
-  return (
-    <li className="grid grid-cols-[34px_42px_1fr_auto] items-center gap-3 border-b border-fuku-border py-3">
-      <span className="text-center text-[18px] font-black text-fuku-black">{person.rank}</span>
-      <a
-        href={`/icons/${person.slug}`}
-        className="h-9 w-9 rounded-full bg-fuku-light bg-cover bg-center"
-        style={{
-          backgroundImage: `linear-gradient(135deg, rgba(255,255,255,.1), rgba(17,17,17,.12)), url('${person.image}')`,
-        }}
-      />
-      <div className="min-w-0">
-        <a href={`/icons/${person.slug}`} className="truncate text-[13px] font-black text-fuku-black">{person.name}</a>
-        <p className="truncate text-[10px] font-bold text-fuku-gray">
-          {person.category}　{person.area}
-        </p>
-      </div>
-      <div className="text-right">
-        <p className="text-[12px] font-black text-fuku-black">{person.votes.toLocaleString()}票</p>
-        <button type="button" onClick={() => support(person.name.toLowerCase())} className="mt-1 min-h-[30px] rounded-full border border-fuku-red px-4 text-[11px] font-black text-fuku-red">
-          応援する
-        </button>
-      </div>
-    </li>
-  );
-}
-
-function IconsRanking({ people }: { people: IconPerson[] }) {
-  const top3 = people.slice(0, 3);
-  const rest = people.slice(3, 6);
+function IconsRanking({ people, onVote }: { people: IconPerson[]; onVote: (slug: string, votes?: number) => void }) {
+  const topPeople = people.slice(0, 6);
 
   return (
-    <section className="bg-white px-4 py-5">
+    <section className="bg-white px-4 py-6">
       <div className="mb-4 flex items-center justify-between">
-        <h2 className="headline-condensed text-[27px] uppercase leading-none text-fuku-black">
-          ICONS RANKING
-        </h2>
-        <a href="/icons/all" className="text-[11px] font-black text-fuku-black">
-          すべて見る →
-        </a>
+        <h2 className="headline-condensed text-[34px] uppercase leading-none text-fuku-black">ICONS RANKING</h2>
+        <a href="/icons/all" className="text-[12px] font-black text-fuku-black">すべて見る →</a>
       </div>
-      <div className="grid grid-cols-3 gap-3">
-        {top3.map((person) => (
-          <TopIconCard key={person.name} person={person} />
+      <div className="no-scrollbar flex gap-3 overflow-x-auto pb-2">
+        {topPeople.map((person) => (
+          <TopIconCard key={person.slug} person={person} onVote={onVote} />
         ))}
       </div>
-      <ol className="mt-4 rounded-[12px] border border-fuku-border bg-white px-3">
-        {rest.map((person) => (
-          <RankingListRow key={person.name} person={person} />
-        ))}
-      </ol>
     </section>
   );
 }
 
-function NewFaceSection() {
+function NewFaceSection({ people, onVote }: { people: IconPerson[]; onVote: (slug: string, votes?: number) => void }) {
+  const newFaces = [...people]
+    .sort((a, b) => Date.parse(b.createdAt || "") - Date.parse(a.createdAt || ""))
+    .slice(0, 6);
+
+  if (newFaces.length === 0) return null;
+
   return (
-    <section className="bg-white px-4 py-5">
+    <section className="border-t border-fuku-border bg-white px-4 py-6">
       <div className="mb-4 flex items-center justify-between gap-4">
-        <div className="flex items-end gap-3">
-          <h2 className="headline-condensed text-[28px] uppercase leading-none text-fuku-black">NEW FACE</h2>
-          <p className="text-[11px] font-black text-fuku-black">新しく参加したFUKU ICONS</p>
+        <div className="flex items-end gap-4">
+          <h2 className="headline-condensed text-[36px] uppercase leading-none text-fuku-black">NEW FACE</h2>
+          <p className="pb-1 text-[12px] font-black text-fuku-black">新しく参加したFUKU ICONS</p>
         </div>
-        <a href="/icons/all" className="shrink-0 text-[11px] font-black text-fuku-black">すべて見る →</a>
+        <a href="/icons/all" className="shrink-0 text-[12px] font-black text-fuku-black">すべて見る →</a>
       </div>
-      <div className="no-scrollbar flex gap-3 overflow-x-auto pb-1">
-        {newFaces.map((face) => (
-          <article key={face.name} className="grid min-w-[236px] grid-cols-[92px_1fr] overflow-hidden rounded-[12px] border border-fuku-border bg-white">
-            <div
-              className="bg-fuku-light bg-cover bg-center"
-              style={{
-                backgroundImage: `linear-gradient(135deg, rgba(255,255,255,.1), rgba(17,17,17,.12)), url('${face.image}')`,
-              }}
-            />
-            <div className="relative p-3">
-              <span className="absolute left-3 top-3 rounded-[5px] bg-fuku-red px-2 py-1 text-[9px] font-black text-white">
-                NEW
-              </span>
-              <h3 className="mt-7 text-[16px] font-black text-fuku-black">{face.name}</h3>
-              <p className="text-[11px] font-bold text-fuku-black">{face.category}</p>
-              <p className="mt-1 text-[10px] font-bold text-fuku-gray">{face.area}</p>
-              <button type="button" onClick={() => support(face.name.toLowerCase())} className="mt-3 min-h-[32px] w-full rounded-full border border-fuku-red text-[11px] font-black text-fuku-red">
-                応援する
-              </button>
+      <div className="no-scrollbar flex gap-4 overflow-x-auto pb-2">
+        {newFaces.map((person) => (
+          <article key={person.slug} className="grid min-w-[286px] grid-cols-[124px_1fr] overflow-hidden rounded-[16px] border border-fuku-border bg-white shadow-soft">
+            <a
+              href={`/icons/${person.slug}`}
+              className="relative min-h-[196px] bg-fuku-light bg-cover bg-center"
+              style={{ backgroundImage: `url('${person.image}')`, backgroundPosition: "center top" }}
+            >
+              <span className="absolute left-3 top-3 rounded-[7px] bg-fuku-red px-3 py-2 text-[12px] font-black text-white">NEW</span>
+            </a>
+            <div className="flex min-w-0 flex-col justify-center p-4">
+              <h3 className="headline-condensed text-[28px] uppercase leading-none text-fuku-black">{person.name}</h3>
+              <p className="mt-2 text-[14px] font-black text-fuku-black">{person.category}</p>
+              <p className="mt-3 text-[12px] font-black text-fuku-gray">{person.area}</p>
+              <div className="mt-5 grid gap-2">
+                <a href={`/icons/${person.slug}`} className="flex min-h-[42px] items-center justify-center gap-2 rounded-[8px] bg-fuku-red text-[12px] font-black text-white">
+                  <UserRound size={15} />
+                  プロフィールを見る
+                </a>
+                <IconVoteButton
+                  slug={person.slug}
+                  variant="outline"
+                  className="min-h-[42px] rounded-[8px] px-3 text-[12px]"
+                  onVoted={(payload) => onVote(person.slug, payload?.supportCount ?? payload?.votes)}
+                />
+              </div>
             </div>
           </article>
         ))}
@@ -473,23 +357,21 @@ function NewFaceSection() {
 
 function IconsSpotSection() {
   return (
-    <section className="bg-white px-4 py-5">
+    <section className="bg-white px-4 py-6">
       <div className="mb-4 flex items-center justify-between">
-        <h2 className="text-[20px] font-black text-fuku-black">ICONSが通う店</h2>
-        <a href="/search" className="text-[11px] font-black text-fuku-black">すべて見る →</a>
+        <h2 className="text-[22px] font-black text-fuku-black">ICONSが通う店</h2>
+        <a href="/search" className="text-[12px] font-black text-fuku-black">すべて見る →</a>
       </div>
-      <div className="grid grid-cols-3 gap-3">
+      <div className="no-scrollbar flex gap-3 overflow-x-auto pb-2">
         {iconSpots.map((spot) => (
-          <article key={spot.title} className="overflow-hidden rounded-[12px] border border-fuku-border bg-white">
+          <article key={spot.title} className="min-w-[190px] overflow-hidden rounded-[14px] border border-fuku-border bg-white">
             <div
-              className="h-[88px] bg-fuku-light bg-cover bg-center"
-              style={{
-                backgroundImage: `linear-gradient(135deg, rgba(255,255,255,.1), rgba(17,17,17,.16)), url('${spot.image}')`,
-              }}
+              className="h-[116px] bg-fuku-light bg-cover bg-center"
+              style={{ backgroundImage: `linear-gradient(135deg, rgba(255,255,255,.1), rgba(17,17,17,.16)), url('${spot.image}')` }}
             />
             <div className="p-3">
-              <h3 className="text-[12px] font-black leading-snug text-fuku-black">{spot.title}</h3>
-              <p className="mt-2 text-[10px] font-bold leading-relaxed text-fuku-gray">{spot.description}</p>
+              <h3 className="text-[13px] font-black leading-snug text-fuku-black">{spot.title}</h3>
+              <p className="mt-2 text-[11px] font-bold leading-relaxed text-fuku-gray">{spot.description}</p>
               <p className="mt-2 flex items-center gap-1 text-[10px] font-black text-fuku-black">
                 <MapPin size={12} />
                 {spot.area}
@@ -498,51 +380,6 @@ function IconsSpotSection() {
           </article>
         ))}
       </div>
-    </section>
-  );
-}
-
-function IconsEntryCta({ cms }: { cms: IconsCmsData }) {
-  return (
-    <section className="grid gap-3 bg-white px-4 py-5">
-      <article className="relative overflow-hidden rounded-[14px] border border-[#f5caca] bg-white p-4">
-        <div className="absolute left-4 top-6 h-12 w-1 bg-fuku-red" />
-        <Crown className="absolute right-4 top-5 text-fuku-black/12" size={58} />
-        <h2 className="pl-4 text-[17px] font-black leading-snug text-fuku-black">
-          FUKU ICONSに
-          <br />
-          エントリーしませんか？
-        </h2>
-        <p className="mt-3 pl-4 text-[11px] font-bold leading-relaxed text-fuku-gray">
-          モデル・美容師・アーティストなど、あなたの魅力をFUKU ICONSで発信しよう。
-        </p>
-        <a
-          href="/forms/icon-entry"
-          className="mt-4 flex min-h-[42px] w-full items-center justify-center gap-2 rounded-[8px] bg-fuku-red text-[12px] font-black text-white"
-        >
-          {cms.entryCtaText}
-          <ArrowRight size={15} />
-        </a>
-      </article>
-      <article className="relative overflow-hidden rounded-[14px] border border-[#f5caca] bg-white p-4">
-        <div className="absolute left-4 top-6 h-12 w-1 bg-fuku-red" />
-        <Megaphone className="absolute right-4 top-5 text-fuku-black/12" size={58} />
-        <h2 className="pl-4 text-[17px] font-black leading-snug text-fuku-black">
-          あなたの推しを
-          <br />
-          教えてください。
-        </h2>
-        <p className="mt-3 pl-4 text-[11px] font-bold leading-relaxed text-fuku-gray">
-          身近にいる“気になる人”を推薦して、一緒に福岡を盛り上げよう。
-        </p>
-        <a
-          href="/forms/icon-recommend"
-          className="mt-4 flex min-h-[42px] w-full items-center justify-center gap-2 rounded-[8px] border border-fuku-red bg-white text-[12px] font-black text-fuku-red"
-        >
-          {cms.recommendCtaText}
-          <ArrowRight size={15} />
-        </a>
-      </article>
     </section>
   );
 }
@@ -576,47 +413,35 @@ export default function IconsPage() {
   const [cms, setCms] = useState<IconsCmsData>(() => getDefaultIconsCmsData());
   const [people, setPeople] = useState<IconPerson[]>([]);
   const [selectedCategory, setSelectedCategory] = useState("すべて");
+
   useEffect(() => {
     let mounted = true;
     void getPublishedIconsAsync().then((published) => {
       if (mounted) setCms(published);
     });
+
     fetch("/api/content/icons", { cache: "no-store" })
       .then((response) => (response.ok ? response.json() : Promise.reject(new Error("failed"))))
-      .then((data: { items?: Array<Record<string, any>> }) => {
-        if (!mounted) return;
-        const normalized = (data.items ?? [])
-          .map((item, index) => ({
-            rank: index + 1,
-            slug: String(item.slug || item.id || index + 1),
-            name: String(item.name || "NO NAME"),
-            category: String(item.category || "creator"),
-            tab: String(item.category || "すべて"),
-            area: String(item.area || "福岡エリア"),
-            votes: Number(item.votes ?? item.supportCount ?? 0),
-            image: String(item.avatarUrl || item.image || item.heroImageUrl || "/images/icons/yui.jpg"),
-            heroImage: item.heroImageUrl ? String(item.heroImageUrl) : undefined,
-            profile: item.profileText || item.copy ? String(item.profileText || item.copy) : undefined,
-            attention: item.attention ? String(item.attention) : undefined,
-          }))
-          .sort((a, b) => b.votes - a.votes || a.name.localeCompare(b.name))
-          .map((item, index) => ({ ...item, rank: index + 1 }));
-        setPeople(normalized);
+      .then((data: { items?: ApiIcon[] }) => {
+        if (mounted) setPeople(normalizeIcons(data.items ?? []));
       })
       .catch(() => {
         if (mounted) setPeople([]);
       });
+
     return () => {
       mounted = false;
     };
   }, []);
-  const filteredPeople = useMemo(() => {
+
+  const visiblePeople = useMemo(() => {
     if (selectedCategory === "すべて") return people;
-    return people
-      .filter((person) => person.tab === selectedCategory || person.category.includes(selectedCategory))
-      .map((person, index) => ({ ...person, rank: index + 1 }));
+    return sortIcons(people.filter((person) => person.tab === selectedCategory || person.category.includes(selectedCategory)));
   }, [people, selectedCategory]);
-  const visiblePeople = filteredPeople;
+
+  function handleVote(slug: string, votes?: number) {
+    setPeople((current) => updatePersonVotes(current, slug, votes));
+  }
 
   return (
     <div className="mx-auto min-h-screen max-w-[430px] bg-white shadow-phone">
@@ -625,12 +450,11 @@ export default function IconsPage() {
         <IconsHero cms={cms} />
         {people.length ? (
           <>
-            <WeeklyIconCard person={people[0]} />
-        <IconCategoryTabs selectedCategory={selectedCategory} onSelect={setSelectedCategory} />
-        <IconsRanking people={visiblePeople} />
-            <NewFaceSection />
+            <WeeklyIconCard person={people[0]} onVote={handleVote} />
+            <IconCategoryTabs selectedCategory={selectedCategory} onSelect={setSelectedCategory} />
+            <IconsRanking people={visiblePeople} onVote={handleVote} />
+            <NewFaceSection people={people} onVote={handleVote} />
             <IconsSpotSection />
-            <IconsEntryCta cms={cms} />
           </>
         ) : (
           <section className="bg-white px-4 py-10">
