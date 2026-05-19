@@ -25,12 +25,16 @@ import type { IconsCmsData } from "@/types/cms";
 
 type IconPerson = {
   rank: number;
+  slug: string;
   name: string;
   category: string;
   tab: string;
   area: string;
   votes: number;
   image: string;
+  heroImage?: string;
+  profile?: string;
+  attention?: string;
 };
 
 type NewFace = {
@@ -62,6 +66,7 @@ const iconsRanking: IconPerson[] = [
   {
     rank: 1,
     name: "YUI",
+    slug: "yui",
     category: "model / creator",
     tab: "モデル",
     area: "天神エリア",
@@ -71,6 +76,7 @@ const iconsRanking: IconPerson[] = [
   {
     rank: 2,
     name: "RENA",
+    slug: "rena",
     category: "model",
     tab: "モデル",
     area: "大名エリア",
@@ -80,6 +86,7 @@ const iconsRanking: IconPerson[] = [
   {
     rank: 3,
     name: "ANNA",
+    slug: "anna",
     category: "model",
     tab: "モデル",
     area: "天神エリア",
@@ -89,6 +96,7 @@ const iconsRanking: IconPerson[] = [
   {
     rank: 4,
     name: "MIO",
+    slug: "mio",
     category: "model",
     tab: "モデル",
     area: "薬院エリア",
@@ -98,6 +106,7 @@ const iconsRanking: IconPerson[] = [
   {
     rank: 5,
     name: "SORA",
+    slug: "sora",
     category: "美容師 / creator",
     tab: "美容師",
     area: "大名エリア",
@@ -107,6 +116,7 @@ const iconsRanking: IconPerson[] = [
   {
     rank: 6,
     name: "KEITA",
+    slug: "keita",
     category: "DJ / producer",
     tab: "DJ",
     area: "中洲エリア",
@@ -116,6 +126,7 @@ const iconsRanking: IconPerson[] = [
   {
     rank: 7,
     name: "AOI",
+    slug: "aoi",
     category: "artist",
     tab: "アーティスト",
     area: "今泉エリア",
@@ -125,6 +136,7 @@ const iconsRanking: IconPerson[] = [
   {
     rank: 8,
     name: "RINA",
+    slug: "rina",
     category: "influencer",
     tab: "インフルエンサー",
     area: "天神エリア",
@@ -134,6 +146,7 @@ const iconsRanking: IconPerson[] = [
   {
     rank: 9,
     name: "KENTO",
+    slug: "kento",
     category: "creator",
     tab: "クリエイター",
     area: "大名エリア",
@@ -143,6 +156,7 @@ const iconsRanking: IconPerson[] = [
   {
     rank: 10,
     name: "NANA",
+    slug: "nana",
     category: "student creator",
     tab: "学生",
     area: "六本松エリア",
@@ -230,7 +244,7 @@ function IconsHero({ cms }: { cms: IconsCmsData }) {
   );
 }
 
-function WeeklyIconCard() {
+function WeeklyIconCard({ person }: { person: IconPerson }) {
   return (
     <section className="bg-white px-4 py-6">
       <article className="rounded-[16px] border border-fuku-border bg-white p-4 shadow-soft">
@@ -246,30 +260,24 @@ function WeeklyIconCard() {
           <div
             className="min-h-[226px] rounded-[12px] bg-fuku-light bg-cover bg-center"
             style={{
-              backgroundImage:
-                "linear-gradient(135deg, rgba(255,255,255,.08), rgba(17,17,17,.14)), url('/images/icons/yui.jpg')",
+              backgroundImage: `linear-gradient(135deg, rgba(255,255,255,.08), rgba(17,17,17,.14)), url('${person.heroImage || person.image}')`,
             }}
           />
           <div className="min-w-0">
             <div className="flex items-start justify-between gap-3">
               <div>
-                <h3 className="text-[34px] font-black leading-none text-fuku-black">YUI</h3>
-                <p className="mt-2 text-[13px] font-bold text-fuku-gray">model / creator</p>
+                <h3 className="text-[34px] font-black leading-none text-fuku-black">{person.name}</h3>
+                <p className="mt-2 text-[13px] font-bold text-fuku-gray">{person.category}</p>
               </div>
-              <span className="rounded-full bg-fuku-light px-4 py-2 text-[12px] font-black text-fuku-black">
-                RANK 1
-              </span>
             </div>
             <p className="mt-4 text-[14px] font-black leading-relaxed text-fuku-black">
-              福岡から全国へ。
-              <br />
-              いま注目したい次世代アイコン。
+              {person.profile || "福岡で活動する注目のアイコン。"}
             </p>
             <div className="mt-4 grid grid-cols-3 gap-2">
               {[
-                { label: "エリア", value: "天神", icon: MapPin },
-                { label: "注目度", value: "98.7%", icon: Flame },
-                { label: "投票数", value: "2,430", icon: Crown },
+                { label: "エリア", value: person.area.replace("エリア", ""), icon: MapPin },
+                { label: "注目度", value: person.attention || "-", icon: Flame },
+                { label: "投票数", value: person.votes.toLocaleString("ja-JP"), icon: Crown },
               ].map(({ label, value, icon: Icon }) => (
                 <div key={label}>
                   <Icon size={17} className="text-fuku-black" />
@@ -280,14 +288,14 @@ function WeeklyIconCard() {
             </div>
             <div className="mt-5 grid grid-cols-2 gap-2">
               <a
-                href="/icons/yui"
+                href={`/icons/${person.slug}`}
                 className="flex min-h-[44px] items-center justify-center rounded-[8px] bg-fuku-red text-[13px] font-black text-white"
               >
                 プロフィールを見る
               </a>
               <button
                 type="button"
-                onClick={() => support("yui")}
+                onClick={() => support(person.slug)}
                 className="flex min-h-[44px] items-center justify-center gap-2 rounded-[8px] border border-fuku-red bg-white text-[13px] font-black text-fuku-red"
               >
                 <Heart size={17} />
@@ -348,13 +356,14 @@ function TopIconCard({ person }: { person: IconPerson }) {
         >
           {person.rank}
         </span>
-        <div
+        <a
+          href={`/icons/${person.slug}`}
           className="mx-auto h-20 w-20 rounded-full bg-fuku-light bg-cover bg-center"
           style={{
             backgroundImage: `linear-gradient(135deg, rgba(255,255,255,.1), rgba(17,17,17,.12)), url('${person.image}')`,
           }}
         />
-        <h3 className="mt-3 text-[16px] font-black text-fuku-black">{person.name}</h3>
+        <a href={`/icons/${person.slug}`} className="mt-3 block text-[16px] font-black text-fuku-black">{person.name}</a>
         <p className="mt-1 min-h-[28px] text-[10px] font-bold leading-snug text-fuku-black">
           {person.category}
         </p>
@@ -374,14 +383,15 @@ function RankingListRow({ person }: { person: IconPerson }) {
   return (
     <li className="grid grid-cols-[34px_42px_1fr_auto] items-center gap-3 border-b border-fuku-border py-3">
       <span className="text-center text-[18px] font-black text-fuku-black">{person.rank}</span>
-      <div
+      <a
+        href={`/icons/${person.slug}`}
         className="h-9 w-9 rounded-full bg-fuku-light bg-cover bg-center"
         style={{
           backgroundImage: `linear-gradient(135deg, rgba(255,255,255,.1), rgba(17,17,17,.12)), url('${person.image}')`,
         }}
       />
       <div className="min-w-0">
-        <p className="truncate text-[13px] font-black text-fuku-black">{person.name}</p>
+        <a href={`/icons/${person.slug}`} className="truncate text-[13px] font-black text-fuku-black">{person.name}</a>
         <p className="truncate text-[10px] font-bold text-fuku-gray">
           {person.category}　{person.area}
         </p>
@@ -564,35 +574,72 @@ function IconCommentsSection() {
 
 export default function IconsPage() {
   const [cms, setCms] = useState<IconsCmsData>(() => getDefaultIconsCmsData());
+  const [people, setPeople] = useState<IconPerson[]>([]);
   const [selectedCategory, setSelectedCategory] = useState("すべて");
   useEffect(() => {
     let mounted = true;
     void getPublishedIconsAsync().then((published) => {
       if (mounted) setCms(published);
     });
+    fetch("/api/content/icons", { cache: "no-store" })
+      .then((response) => (response.ok ? response.json() : Promise.reject(new Error("failed"))))
+      .then((data: { items?: Array<Record<string, any>> }) => {
+        if (!mounted) return;
+        const normalized = (data.items ?? [])
+          .map((item, index) => ({
+            rank: index + 1,
+            slug: String(item.slug || item.id || index + 1),
+            name: String(item.name || "NO NAME"),
+            category: String(item.category || "creator"),
+            tab: String(item.category || "すべて"),
+            area: String(item.area || "福岡エリア"),
+            votes: Number(item.votes ?? item.supportCount ?? 0),
+            image: String(item.avatarUrl || item.image || item.heroImageUrl || "/images/icons/yui.jpg"),
+            heroImage: item.heroImageUrl ? String(item.heroImageUrl) : undefined,
+            profile: item.profileText || item.copy ? String(item.profileText || item.copy) : undefined,
+            attention: item.attention ? String(item.attention) : undefined,
+          }))
+          .sort((a, b) => b.votes - a.votes || a.name.localeCompare(b.name))
+          .map((item, index) => ({ ...item, rank: index + 1 }));
+        setPeople(normalized);
+      })
+      .catch(() => {
+        if (mounted) setPeople([]);
+      });
     return () => {
       mounted = false;
     };
   }, []);
   const filteredPeople = useMemo(() => {
-    if (selectedCategory === "すべて") return iconsRanking;
-    return iconsRanking
-      .filter((person) => person.tab === selectedCategory)
+    if (selectedCategory === "すべて") return people;
+    return people
+      .filter((person) => person.tab === selectedCategory || person.category.includes(selectedCategory))
       .map((person, index) => ({ ...person, rank: index + 1 }));
-  }, [selectedCategory]);
-  const visiblePeople = filteredPeople.length >= 3 ? filteredPeople : iconsRanking;
+  }, [people, selectedCategory]);
+  const visiblePeople = filteredPeople;
 
   return (
     <div className="mx-auto min-h-screen max-w-[430px] bg-white shadow-phone">
       <Header />
       <main>
         <IconsHero cms={cms} />
-        <WeeklyIconCard />
+        {people.length ? (
+          <>
+            <WeeklyIconCard person={people[0]} />
         <IconCategoryTabs selectedCategory={selectedCategory} onSelect={setSelectedCategory} />
         <IconsRanking people={visiblePeople} />
-        <NewFaceSection />
-        <IconsSpotSection />
-        <IconsEntryCta cms={cms} />
+            <NewFaceSection />
+            <IconsSpotSection />
+            <IconsEntryCta cms={cms} />
+          </>
+        ) : (
+          <section className="bg-white px-4 py-10">
+            <div className="rounded-[16px] border border-dashed border-fuku-border bg-[#fbfaf7] p-6 text-center">
+              <p className="text-[18px] font-black text-fuku-black">FUKU ICONSは準備中です</p>
+              <p className="mt-2 text-[12px] font-bold text-fuku-gray">管理画面から公開されたアイコンが登録されると、ここに表示されます。</p>
+            </div>
+          </section>
+        )}
         <IconCommentsSection />
       </main>
       <BottomNav active="home" />

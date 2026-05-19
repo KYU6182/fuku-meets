@@ -3,11 +3,11 @@ import Header from "@/components/Header";
 import PageHero from "@/components/PageHero";
 import RankingCommentSection from "@/components/RankingCommentSection";
 import RankingEntryCard from "@/components/RankingEntryCard";
-import { getRankingTheme } from "@/lib/rankingSystem";
+import { fetchPublishedRankingTheme } from "@/lib/publicRankings";
 
 export default async function RankingThemePage({ params }: { params: Promise<{ rankingSlug: string }> }) {
   const { rankingSlug } = await params;
-  const theme = getRankingTheme(rankingSlug);
+  const theme = await fetchPublishedRankingTheme(rankingSlug);
 
   if (!theme) {
     return (
@@ -25,9 +25,15 @@ export default async function RankingThemePage({ params }: { params: Promise<{ r
       <main className="pb-28">
         <PageHero title={theme.title} copy={theme.description} />
         <section className="space-y-3 bg-white px-4 py-5">
-          <p className="text-[11px] font-bold text-fuku-gray">集計期間：{theme.period}</p>
+          {theme.period ? <p className="text-[11px] font-bold text-fuku-gray">集計期間：{theme.period}</p> : null}
           <div className="grid gap-3">
-            {theme.entries.map((entry) => <RankingEntryCard key={entry.slug} rankingSlug={theme.slug} entry={entry} />)}
+            {theme.entries.length ? (
+              theme.entries.map((entry) => <RankingEntryCard key={entry.slug} rankingSlug={theme.slug} entry={entry} />)
+            ) : (
+              <div className="rounded-[16px] border border-dashed border-fuku-border bg-white p-8 text-center">
+                <p className="text-[18px] font-black text-fuku-black">候補は準備中です</p>
+              </div>
+            )}
           </div>
         </section>
         <RankingCommentSection rankingSlug={theme.slug} title={theme.title} />

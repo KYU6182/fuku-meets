@@ -3,28 +3,47 @@
 import { CalendarPlus } from "lucide-react";
 import { useEffect, useState } from "react";
 import BottomNav from "@/components/BottomNav";
-import Button from "@/components/Button";
 import Header from "@/components/Header";
 import PageHero from "@/components/PageHero";
 import { getDefaultNewsCmsData, getPublishedNewsAsync } from "@/lib/cms";
-import { newsArticles } from "@/lib/data/news";
+
+type NewsArticle = {
+  slug: string;
+  title: string;
+  category: string;
+  image?: string;
+  summary?: string;
+  date?: string;
+};
+
+function normalizeArticles(items: NewsArticle[]) {
+  return items.filter((item) => item.slug && item.title);
+}
 
 export default function NewsPage() {
   const [cms, setCms] = useState(() => getDefaultNewsCmsData());
+  const [publishedArticles, setPublishedArticles] = useState<NewsArticle[]>([]);
   const [tab, setTab] = useState("すべて");
   useEffect(() => {
     let mounted = true;
-    void getPublishedNewsAsync().then((published) => {
+    void Promise.all([
+      getPublishedNewsAsync(),
+      fetch("/api/content/news", { cache: "no-store" }).then((response) => (response.ok ? response.json() : { items: [] })),
+    ]).then(([published, data]: [ReturnType<typeof getDefaultNewsCmsData>, { items?: NewsArticle[] }]) => {
       if (!mounted) return;
       setCms(published);
       setTab(published.categories[0] ?? "すべて");
+      setPublishedArticles(normalizeArticles(data.items ?? []));
+    }).catch(() => {
+      if (!mounted) return;
+      setPublishedArticles([]);
     });
     return () => {
       mounted = false;
     };
   }, []);
   const tabs = cms.categories.length ? cms.categories : getDefaultNewsCmsData().categories;
-  const articles = tab === "すべて" ? newsArticles : newsArticles.filter((article) => article.category === tab);
+  const articles = tab === "すべて" ? publishedArticles : publishedArticles.filter((article) => article.category === tab);
 
   return (
     <div className="mx-auto min-h-screen max-w-[430px] bg-fuku-bg shadow-phone">
@@ -46,18 +65,28 @@ export default function NewsPage() {
           </div>
 
           <h2 className="mt-6 text-[18px] font-black">PICK UP NEWS</h2>
-          <div className="mt-3 space-y-3">
-            {articles.map((article) => (
-              <a key={article.slug} href={`/news/${article.slug}`} className="flex gap-3 rounded-[14px] border border-fuku-border bg-white p-3">
-                <div className="h-24 w-28 shrink-0 rounded-[10px] bg-fuku-light bg-cover bg-center" style={{ backgroundImage: `url('${article.image}')` }} />
-                <span className="min-w-0">
-                  <span className="text-[10px] font-black text-fuku-red">{article.category}</span>
-                  <span className="mt-1 block text-[14px] font-black leading-snug">{article.title}</span>
-                  <span className="mt-2 block text-[10px] font-bold text-fuku-gray">{article.date}</span>
-                </span>
-              </a>
-            ))}
-          </div>
+          {articles.length ? (
+            <div className="mt-3 space-y-3">
+              {articles.map((article) => (
+                <a key={article.slug} href={`/news/${article.slug}`} className="flex gap-3 rounded-[14px] border border-fuku-border bg-white p-3">
+                  <div
+                    className="h-24 w-28 shrink-0 rounded-[10px] bg-fuku-light bg-cover bg-center"
+                    style={article.image ? { backgroundImage: `url('${article.image}')` } : undefined}
+                  />
+                  <span className="min-w-0">
+                    <span className="text-[10px] font-black text-fuku-red">{article.category}</span>
+                    <span className="mt-1 block text-[14px] font-black leading-snug">{article.title}</span>
+                    <span className="mt-2 block text-[10px] font-bold text-fuku-gray">{article.date ? new Date(article.date).toLocaleDateString("ja-JP") : "近日公開"}</span>
+                  </span>
+                </a>
+              ))}
+            </div>
+          ) : (
+            <div className="mt-3 rounded-[16px] border border-dashed border-fuku-border bg-white p-8 text-center">
+              <p className="text-[18px] font-black text-fuku-black">記事は準備中です</p>
+              <p className="mt-2 text-[12px] font-bold text-fuku-gray">近日公開</p>
+            </div>
+          )}
 
           <a href="/forms/event-submit" className="mt-6 flex min-h-[82px] items-center gap-4 rounded-[14px] bg-white p-4">
             <span className="grid h-12 w-12 place-items-center rounded-full bg-[#fff1f1] text-fuku-red">

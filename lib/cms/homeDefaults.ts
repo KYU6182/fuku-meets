@@ -18,8 +18,6 @@ export const defaultSectionOrder: HomeSectionId[] = [
   "ranking",
   "fukuIcons",
   "localMedia",
-  "startGuide",
-  "safety",
   "magazine",
   "followUs",
 ];
@@ -149,7 +147,7 @@ export function getDefaultHomeCmsData(): HomeCmsData {
       subtitle: "今日の気分や趣味で参加できるMEET。",
       description: "初めてでも安心して参加できます。素敵な出会いを楽しもう。",
       showNewBadge: true,
-      categoryIds: ["music", "drink-now", "midnight", "girls", "solo", "visitor", "cafe-work"],
+      categoryIds: [],
       ctaText: "すべて見る",
       ctaHref: "/meet",
       isVisible: true,
@@ -192,7 +190,7 @@ export function getDefaultHomeCmsData(): HomeCmsData {
       mainCardImage: "/images/fukuoka-city.jpg",
       ctaText: "VISITOR GUIDEを見る",
       ctaHref: "/visitor",
-      isVisible: true,
+      isVisible: false,
     },
     safety: {
       id: "safety",
@@ -206,7 +204,7 @@ export function getDefaultHomeCmsData(): HomeCmsData {
         { id: "age", title: "20歳以上確認", description: "飲酒を伴うMEETは20歳以上のみ。", icon: "BadgeCheck" },
         { id: "venue", title: "店舗は参加者に共有", description: "詳細は参加者にのみ共有される場合があります。", icon: "MapPin" },
       ],
-      isVisible: true,
+      isVisible: false,
     },
     magazine: {
       id: "magazine",

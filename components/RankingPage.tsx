@@ -6,54 +6,72 @@ import {
   Building2,
   Coffee,
   Crown,
-  Edit3,
-  Home,
   MapPin,
-  MessageCircle,
   Moon,
   ShoppingBasket,
-  Soup,
   Store,
-  ThumbsUp,
   Train,
-  TrendingUp,
-  Trophy,
   Utensils,
 } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import type { ElementType } from "react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import BottomNav from "./BottomNav";
 import Header from "./Header";
 import RankingCommentSection from "./RankingCommentSection";
 import RankingPickedComments from "./RankingPickedComments";
 import RankingVoteButton from "./RankingVoteButton";
-import { addToLocalList, useToast } from "./Toast";
-import { rankingThemeAliases } from "@/lib/data/rankings";
+import { useToast } from "./Toast";
 import { getDefaultRankingCmsData, getPublishedRankingAsync } from "@/lib/cms";
-import { getEntryVoteCount, getRankingTheme } from "@/lib/rankingSystem";
-import { storageKeys } from "@/lib/storageKeys";
 import type { RankingCmsData } from "@/types/cms";
 
 type CategoryId = "food" | "people" | "daily" | "night" | "area";
 
-type RankingItem = {
-  rank: number;
-  name: string;
-  votes: string;
-  image: string;
-  note?: string;
+type ApiRankingEntry = {
+  rank?: number;
+  slug?: string;
+  name?: string;
+  votes?: number | string;
+  image?: string;
+  thumbnailUrl?: string;
+  heroImageUrl?: string;
+  area?: string;
+  description?: string;
+  tags?: string[];
+  pickedComments?: string[];
 };
 
-type RankingTheme = {
+type ApiRankingTheme = {
+  id?: string;
+  slug?: string;
+  category?: string;
+  title?: string;
+  description?: string;
+  period?: string;
+  image?: string;
+  entries?: ApiRankingEntry[];
+};
+
+type RankingEntryView = {
+  rank: number;
+  slug: string;
+  name: string;
+  votes: number;
+  image: string;
+  area: string;
+  description: string;
+  pickedComments: string[];
+};
+
+type RankingThemeView = {
   id: string;
+  slug: string;
+  category: CategoryId;
   title: string;
   description: string;
   period: string;
   icon: ElementType;
-  image: string;
-  top3: string[];
-  items: RankingItem[];
+  entries: RankingEntryView[];
 };
 
 const rankingCategories: { id: CategoryId; label: string }[] = [
@@ -64,516 +82,111 @@ const rankingCategories: { id: CategoryId; label: string }[] = [
   { id: "area", label: "AREA" },
 ];
 
-const dailyPeriod = "2024.05.01 - 2024.05.31";
-
-const rankingThemes: Record<CategoryId, RankingTheme[]> = {
-  daily: [
-    {
-      id: "supermarket",
-      title: "好きなスーパー",
-      description: "日常の味方！通いやすくて、品ぞろえも◎",
-      period: dailyPeriod,
-      icon: ShoppingBasket,
-      image: "/images/ranking/super-bonrepas.jpg",
-      top3: ["ボンラパス", "ハローデイ", "サニー"],
-      items: [
-        { rank: 1, name: "ボンラパス", votes: "1,842票", image: "/images/ranking/super-bonrepas.jpg" },
-        { rank: 2, name: "ハローデイ", votes: "1,233票", image: "/images/ranking/super-halloday.jpg" },
-        { rank: 3, name: "サニー", votes: "987票", image: "/images/ranking/super-sunny.jpg" },
-        { rank: 4, name: "マックスバリュ", votes: "845票", image: "/images/ranking/super-maxvalu.jpg", note: "あと32票でTOP3" },
-        { rank: 5, name: "にしてつストア", votes: "792票", image: "/images/ranking/super-nishitetsu.jpg", note: "あと50票でTOP3" },
-        { rank: 6, name: "TRIAL", votes: "701票", image: "/images/ranking/super-trial.jpg", note: "急上昇" },
-        { rank: 7, name: "業務スーパー", votes: "655票", image: "/images/ranking/super-gyomu.jpg" },
-        { rank: 8, name: "レガネット", votes: "602票", image: "/images/ranking/super-reganet.jpg" },
-        { rank: 9, name: "マキイ", votes: "588票", image: "/images/ranking/super-makii.jpg", note: "急上昇" },
-        { rank: 10, name: "ロピア", votes: "540票", image: "/images/ranking/super-lopia.jpg" },
-      ],
-    },
-    {
-      id: "station",
-      title: "好きな駅",
-      description: "通勤・通学も、おでかけも。よく使う駅はここ！",
-      period: dailyPeriod,
-      icon: Train,
-      image: "/images/ranking/station-yakuin.jpg",
-      top3: ["薬院駅", "天神駅", "博多駅"],
-      items: [
-        { rank: 1, name: "薬院駅", votes: "2,109票", image: "/images/ranking/station-yakuin.jpg" },
-        { rank: 2, name: "天神駅", votes: "1,732票", image: "/images/ranking/station-tenjin.jpg" },
-        { rank: 3, name: "博多駅", votes: "1,421票", image: "/images/ranking/station-hakata.jpg" },
-        { rank: 4, name: "西新駅", votes: "1,098票", image: "/images/ranking/station-nishijin.jpg" },
-        { rank: 5, name: "六本松駅", votes: "1,086票", image: "/images/ranking/station-ropponmatsu.jpg" },
-        { rank: 6, name: "大橋駅", votes: "945票", image: "/images/ranking/station-ohashi.jpg", note: "急上昇" },
-        { rank: 7, name: "赤坂駅", votes: "822票", image: "/images/ranking/station-akasaka.jpg" },
-        { rank: 8, name: "中洲川端駅", votes: "788票", image: "/images/ranking/station-nakasu.jpg" },
-        { rank: 9, name: "平尾駅", votes: "741票", image: "/images/ranking/station-hirao.jpg" },
-        { rank: 10, name: "千早駅", votes: "690票", image: "/images/ranking/station-chihaya.jpg" },
-      ],
-    },
-    {
-      id: "city",
-      title: "住みたい街",
-      description: "住むならこんな街に暮らしたい！",
-      period: dailyPeriod,
-      icon: Home,
-      image: "/images/ranking/city-yakuin.jpg",
-      top3: ["薬院", "大名", "六本松"],
-      items: [
-        { rank: 1, name: "薬院", votes: "1,876票", image: "/images/ranking/city-yakuin.jpg" },
-        { rank: 2, name: "大名", votes: "1,312票", image: "/images/ranking/city-daimyo.jpg" },
-        { rank: 3, name: "六本松", votes: "1,086票", image: "/images/ranking/city-ropponmatsu.jpg" },
-        { rank: 4, name: "西新", votes: "1,020票", image: "/images/ranking/city-nishijin.jpg", note: "あと66票でTOP3" },
-        { rank: 5, name: "平尾", votes: "911票", image: "/images/ranking/city-hirao.jpg" },
-        { rank: 6, name: "大濠公園", votes: "880票", image: "/images/ranking/city-ohori.jpg" },
-        { rank: 7, name: "今泉", votes: "812票", image: "/images/ranking/city-imaizumi.jpg" },
-        { rank: 8, name: "赤坂", votes: "799票", image: "/images/ranking/city-akasaka.jpg" },
-        { rank: 9, name: "千早", votes: "740票", image: "/images/ranking/city-chihaya.jpg", note: "急上昇" },
-        { rank: 10, name: "博多", votes: "701票", image: "/images/ranking/city-hakata.jpg" },
-      ],
-    },
-    {
-      id: "night-help",
-      title: "深夜助かる場所",
-      description: "遅くなった日も、ここがあると安心。",
-      period: dailyPeriod,
-      icon: Moon,
-      image: "/images/ranking/night-seven.jpg",
-      top3: ["セブン-イレブン", "TRIAL GO", "すき家"],
-      items: [
-        { rank: 1, name: "セブン-イレブン", votes: "2,243票", image: "/images/ranking/night-seven.jpg" },
-        { rank: 2, name: "TRIAL GO", votes: "1,498票", image: "/images/ranking/night-trial.jpg" },
-        { rank: 3, name: "すき家", votes: "1,205票", image: "/images/ranking/night-sukiya.jpg" },
-        { rank: 4, name: "ドン・キホーテ", votes: "1,118票", image: "/images/ranking/night-donki.jpg" },
-        { rank: 5, name: "一蘭", votes: "1,030票", image: "/images/ranking/night-ichiran.jpg", note: "急上昇" },
-        { rank: 6, name: "マックスバリュ", votes: "944票", image: "/images/ranking/night-maxvalu.jpg" },
-        { rank: 7, name: "ファミリーマート", votes: "902票", image: "/images/ranking/night-familymart.jpg" },
-        { rank: 8, name: "松屋", votes: "855票", image: "/images/ranking/night-matsuya.jpg" },
-        { rank: 9, name: "サニー", votes: "811票", image: "/images/ranking/night-sunny.jpg" },
-        { rank: 10, name: "ウエスト", votes: "780票", image: "/images/ranking/night-west.jpg" },
-      ],
-    },
-  ],
-  food: [
-    makeSimpleTheme("cafe", "カフェ", "ひとり時間もデートも使える人気カフェ。", Coffee, ["manu coffee", "café mitu", "Sabrina Coffee"]),
-    makeSimpleTheme("izakaya", "居酒屋", "仕事終わりに寄りたい福岡の夜ごはん。", Utensils, ["大名の隠れ家", "今泉酒場", "薬院二軒目"]),
-    makeSimpleTheme("ramen", "ラーメン", "飲んだあとに締めたい一杯。", Soup, ["大名深夜麺", "博多豚骨", "中洲の一杯"]),
-    makeSimpleTheme("bakery", "パン", "週末の朝に行きたいパン屋。", Store, ["大濠ベーカリー", "薬院クロワッサン", "六本松ブレッド"]),
-  ],
-  people: [
-    makeSimpleTheme("model", "モデル", "福岡で注目されるモデルランキング。", Crown, ["YUI", "RENA", "ANNA"]),
-    makeSimpleTheme("hair", "美容師", "髪を任せたい人気美容師。", Trophy, ["MIO", "SORA", "HARU"]),
-    makeSimpleTheme("dj", "DJ", "福岡の夜をつくるDJ。", TrendingUp, ["KEITA", "NANA", "RYO"]),
-    makeSimpleTheme("creator", "クリエイター", "街の空気を発信する人たち。", Edit3, ["KENTO", "RINA", "AOI"]),
-  ],
-  night: [
-    makeSimpleTheme("club", "クラブ", "週末に行きたいイベント。", Moon, ["中洲NIGHT", "天神DJ", "大名HOUSE"]),
-    makeSimpleTheme("shisha", "シーシャ", "ゆっくり話せる夜スポット。", Store, ["大名チル", "今泉ラウンジ", "中洲深夜"]),
-    makeSimpleTheme("bar", "バー", "一人でも使いやすいバー。", Utensils, ["赤坂BAR", "薬院カウンター", "大名ワイン"]),
-  ],
-  area: [
-    makeSimpleTheme("tenjin", "天神", "買い物も夜も強い中心エリア。", MapPin, ["天神カフェ", "天神駅", "天神夜市"]),
-    makeSimpleTheme("daimyo", "大名", "カルチャーとごはんが集まる街。", MapPin, ["大名居酒屋", "大名美容室", "大名古着"]),
-    makeSimpleTheme("imaizumi", "今泉", "散歩したくなる店が多い街。", MapPin, ["今泉カフェ", "今泉バー", "今泉サロン"]),
-    makeSimpleTheme("yakuin", "薬院", "暮らしと食がちょうどいい街。", MapPin, ["薬院駅", "薬院カフェ", "薬院ランチ"]),
-    makeSimpleTheme("hakata", "博多", "仕事帰りにも観光にも便利。", MapPin, ["博多駅", "博多豚骨", "博多ホテル"]),
-    makeSimpleTheme("nakasu", "中洲", "夜の福岡を楽しむエリア。", MapPin, ["中洲クラブ", "中洲バー", "中洲屋台"]),
-  ],
+const iconMap: Record<CategoryId, ElementType> = {
+  food: Coffee,
+  people: Crown,
+  daily: ShoppingBasket,
+  night: Moon,
+  area: MapPin,
 };
 
-function makeSimpleTheme(
-  id: string,
-  title: string,
-  description: string,
-  icon: ElementType,
-  top3: string[],
-): RankingTheme {
-  return {
-    id,
-    title,
-    description,
-    period: dailyPeriod,
-    icon,
-    image: `/images/ranking/${id}-1.jpg`,
-    top3,
-    items: Array.from({ length: 6 }, (_, index) => ({
-      rank: index + 1,
-      name: top3[index] ?? `${title} ${index + 1}`,
-      votes: `${1420 - index * 137}票`,
-      image: `/images/ranking/${id}-${index + 1}.jpg`,
-      note: index === 3 ? "急上昇" : undefined,
-    })),
-  };
+function normalizeCategory(value: string | undefined): CategoryId {
+  const category = String(value || "daily").toLowerCase();
+  return ["food", "people", "daily", "night", "area"].includes(category) ? (category as CategoryId) : "daily";
 }
 
-const comments = [
-  { target: "ボンラパス", text: "品ぞろえが良くて、ちょっと良い日常感がある。" },
-  { target: "ハローデイ", text: "惣菜が強い。仕事帰りに助かる。" },
-  { target: "サニー", text: "結局いちばん行く、安心感がある。" },
-];
-
-function showGlobalToast(message: string) {
-  if (typeof window === "undefined") return;
-  window.dispatchEvent(new CustomEvent("fuku-toast", { detail: message }));
+function normalizeThemes(items: ApiRankingTheme[]): RankingThemeView[] {
+  return items
+    .filter((item) => item.title && (item.slug || item.id))
+    .map((theme) => {
+      const category = normalizeCategory(theme.category);
+      const slug = theme.slug || theme.id || "ranking";
+      return {
+        id: theme.id || slug,
+        slug,
+        category,
+        title: theme.title || "ランキング",
+        description: theme.description || "みんなの“好き”を集めたランキングです。",
+        period: theme.period || "",
+        icon: iconMap[category] || Store,
+        entries: (theme.entries ?? [])
+          .map((entry, index) => ({
+            rank: entry.rank || index + 1,
+            slug: entry.slug || `entry-${index + 1}`,
+            name: entry.name || `候補 ${index + 1}`,
+            votes: Number(entry.votes ?? 0),
+            image: entry.heroImageUrl || entry.thumbnailUrl || entry.image || "",
+            area: entry.area || "福岡エリア",
+            description: entry.description || "",
+            pickedComments: entry.pickedComments || [],
+          }))
+          .sort((a, b) => b.votes - a.votes || a.rank - b.rank)
+          .map((entry, index) => ({ ...entry, rank: index + 1 })),
+      };
+    });
 }
 
-function vote() {
-  addToLocalList(storageKeys.votedItems, `ranking:${Date.now()}`);
-  showGlobalToast("投票しました");
+function fallbackImage(category: CategoryId) {
+  if (category === "food") return "linear-gradient(135deg,#2b211c,#d7b17b)";
+  if (category === "people") return "linear-gradient(135deg,#111,#777)";
+  if (category === "night") return "linear-gradient(135deg,#100f1f,#e52421)";
+  if (category === "area") return "linear-gradient(135deg,#d8e7e1,#7a9b8f)";
+  return "linear-gradient(135deg,#f2eee8,#d7cec2)";
 }
 
-function save() {
-  addToLocalList(storageKeys.savedNews, `ranking:${Date.now()}`);
-  showGlobalToast("保存しました");
-}
-
-const themeSlugAliases: Record<string, string> = {
-  city: "area",
-  "night-help": "late-night",
-};
-
-const entrySlugAliases: Record<string, string> = {
-  ボンラパス: "bon-repas",
-  ハローデイ: "halloday",
-  サニー: "sunny",
-  マックスバリュ: "maxvalu",
-  にしてつストア: "nishitetsu-store",
-  TRIAL: "trial",
-  業務スーパー: "gyomu-super",
-  レガネット: "reganet",
-  マキイ: "makii",
-  ロピア: "lopia",
-  薬院駅: "yakuin-station",
-  天神駅: "tenjin-station",
-  博多駅: "hakata-station",
-  薬院: "yakuin",
-  大名: "daimyo",
-  六本松: "ropponmatsu",
-  "セブン-イレブン": "seven-eleven",
-  "TRIAL GO": "trial-go",
-  すき家: "sukiya",
-};
-
-function themeRouteSlug(themeId: string) {
-  return themeSlugAliases[themeId] ?? themeId;
-}
-
-function entryRouteSlug(name: string) {
-  return entrySlugAliases[name] ?? name.toLowerCase().replace(/\s+/g, "-").replace(/[^\w-]/g, "");
-}
-
-function systemEntryFor(themeId: string, name: string) {
-  const theme = getRankingTheme(themeRouteSlug(themeId));
-  const entrySlug = entryRouteSlug(name);
-  const entry = theme?.entries.find((item) => item.slug === entrySlug);
-  return theme && entry ? { theme, entry } : null;
-}
-
-function displayVotes(themeId: string, item: RankingItem) {
-  const system = systemEntryFor(themeId, item.name);
-  if (system) return `${getEntryVoteCount(system.theme.slug, system.entry).toLocaleString()}票`;
-  return item.votes;
-}
-
-function withVoteDelta(votes: string, delta: number) {
-  if (!delta) return votes;
-  const count = Number(votes.replace(/[^\d]/g, "")) || 0;
-  return `${(count + delta).toLocaleString()}票`;
-}
-
-function RankingHero({ cms }: { cms: RankingCmsData }) {
+function EntryImage({ entry, category }: { entry: RankingEntryView; category: CategoryId }) {
   return (
-    <section className="relative overflow-hidden border-b border-fuku-border bg-white px-5 pb-7 pt-7">
-      <div className="absolute right-4 top-16 h-28 w-36 rounded-full bg-[#fff1f1]" />
-      <div className="absolute right-9 top-24 h-24 w-px bg-fuku-red/40" />
-      <div className="absolute right-16 top-36 h-10 w-28 border-b border-r border-fuku-red/25" />
-      <div className="relative">
-        <h1 className="headline-condensed text-[54px] uppercase leading-[0.85] text-fuku-black">
-          {cms.heroTitle}
-        </h1>
-        <p className="mt-4 text-[16px] font-black leading-relaxed text-fuku-red">
-          {cms.heroSubtitle}
-        </p>
-        <p className="mt-3 text-[13px] font-bold leading-relaxed text-fuku-black">
-          カフェ、居酒屋、スーパー、駅、街、人。
-          <br />
-          福岡のリアルな人気を、みんなの投票でチェック。
-        </p>
-        <div className="mt-5 grid grid-cols-3 gap-2">
-          {[
-            { icon: TrendingUp, label: "今週の投票数", value: "12,845票" },
-            { icon: Trophy, label: "開催中ランキング", value: "28件" },
-            { icon: Crown, label: "急上昇", value: "7ジャンル" },
-          ].map(({ icon: Icon, label, value }) => (
-            <article key={label} className="rounded-[10px] border border-fuku-border bg-white p-3">
-              <Icon size={20} className="text-fuku-red" />
-              <p className="mt-2 text-[9px] font-black text-fuku-gray">{label}</p>
-              <p className="mt-1 text-[16px] font-black text-fuku-black">{value}</p>
-            </article>
-          ))}
-        </div>
-        <button
-          type="button"
-          onClick={vote}
-          className="mt-5 flex min-h-[48px] w-full items-center justify-center gap-3 rounded-full bg-fuku-red text-[15px] font-black text-white"
-        >
-          今すぐ投票する
-          <ArrowRight size={18} />
-        </button>
-      </div>
-    </section>
-  );
-}
-
-function RankingCategoryTabs({
-  selectedCategory,
-  onSelect,
-  categories,
-}: {
-  selectedCategory: CategoryId;
-  onSelect: (category: CategoryId) => void;
-  categories: { id: CategoryId; label: string }[];
-}) {
-  return (
-    <div className="sticky top-[116px] z-30 border-b border-fuku-border bg-white px-4 py-4">
-      <div className="grid grid-cols-5 overflow-hidden rounded-full border border-fuku-border bg-white shadow-soft">
-        {categories.map((category) => (
-          <button
-            key={category.id}
-            type="button"
-            onClick={() => onSelect(category.id)}
-            className={`min-h-[42px] text-[12px] font-black ${
-              selectedCategory === category.id ? "bg-fuku-red text-white" : "text-fuku-black"
-            }`}
-          >
-            {category.label}
-          </button>
-        ))}
-      </div>
+    <div
+      className="relative h-[110px] rounded-[12px] bg-cover bg-center"
+      style={entry.image ? { backgroundImage: `url('${entry.image}')` } : { background: fallbackImage(category) }}
+    >
+      <span
+        className={`absolute left-2 top-2 grid h-8 w-8 place-items-center rounded-full text-[15px] font-black text-white ${
+          entry.rank === 1 ? "bg-[#f5b400]" : entry.rank === 2 ? "bg-[#9ca3af]" : entry.rank === 3 ? "bg-[#c9824a]" : "bg-fuku-black"
+        }`}
+      >
+        {entry.rank}
+      </span>
     </div>
   );
 }
 
-function PickupRankingThemes({
-  themes,
-  selectedRanking,
-  onSelect,
-}: {
-  themes: RankingTheme[];
-  selectedRanking: string;
-  onSelect: (themeId: string) => void;
-}) {
-  return (
-    <section className="bg-white px-4 py-5">
-      <h2 className="mb-4 flex items-center gap-2 text-[18px] font-black text-fuku-black">
-        <Crown size={20} className="text-fuku-red" />
-        今週の注目ランキング
-      </h2>
-      <div className="no-scrollbar flex gap-3 overflow-x-auto pb-1">
-        {themes.map((theme) => {
-          const Icon = theme.icon;
-          return (
-            <button
-              key={theme.id}
-              type="button"
-              onClick={() => onSelect(theme.id)}
-              className={`min-w-[174px] rounded-[12px] border bg-white p-3 text-left ${
-                selectedRanking === theme.id ? "border-fuku-red" : "border-fuku-border"
-              }`}
-            >
-              <div className="flex items-center justify-between gap-3">
-                <span className="grid h-9 w-9 place-items-center rounded-full bg-fuku-red text-white">
-                  <Icon size={19} />
-                </span>
-                <span className="rounded-[5px] border border-fuku-red px-2 py-1 text-[10px] font-black text-fuku-red">
-                  TOP3
-                </span>
-              </div>
-              <div
-                className="mt-3 h-[68px] rounded-[7px] bg-fuku-light bg-cover bg-center"
-                style={{
-                  backgroundImage: `linear-gradient(135deg, rgba(255,255,255,.15), rgba(17,17,17,.15)), url('${theme.image}')`,
-                }}
-              />
-              <h3 className="mt-3 text-[14px] font-black text-fuku-black">{theme.title}</h3>
-              <ol className="mt-2 space-y-1 text-[11px] font-bold text-fuku-black">
-                {theme.top3.map((name, index) => (
-                  <li key={name}>
-                    {index + 1}　{name}
-                  </li>
-                ))}
-              </ol>
-            </button>
-          );
-        })}
-      </div>
-    </section>
-  );
-}
-
-function RankingTopCard({ item, themeId }: { item: RankingItem; themeId: string }) {
-  const [voteDelta, setVoteDelta] = useState(0);
-  const badgeClass =
-    item.rank === 1 ? "bg-[#f5b400]" : item.rank === 2 ? "bg-[#9ca3af]" : "bg-[#c9824a]";
-  const rankingSlug = themeRouteSlug(themeId);
-  const entrySlug = entryRouteSlug(item.name);
-  const system = systemEntryFor(themeId, item.name);
+function EntryCard({ theme, entry, compact = false }: { theme: RankingThemeView; entry: RankingEntryView; compact?: boolean }) {
+  const [delta, setDelta] = useState(0);
+  const href = `/ranking/${theme.slug}/${entry.slug}`;
 
   return (
-    <article className="overflow-hidden rounded-[12px] border border-fuku-border bg-white">
-      <a href={`/ranking/${rankingSlug}/${entrySlug}`} className="block">
-        <div
-          className="relative h-[112px] bg-fuku-light bg-cover bg-center"
-          style={{
-            backgroundImage: `linear-gradient(135deg, rgba(255,255,255,.12), rgba(17,17,17,.16)), url('${item.image}')`,
-          }}
-        >
-          <span className={`absolute left-2 top-2 grid h-9 w-9 place-items-center rounded-full text-[17px] font-black text-white ${badgeClass}`}>
-            {item.rank}
-          </span>
-        </div>
+    <article className="overflow-hidden rounded-[14px] border border-fuku-border bg-white shadow-soft">
+      <a href={href} className="block p-2 pb-0">
+        <EntryImage entry={entry} category={theme.category} />
       </a>
       <div className="p-3">
-        <a href={`/ranking/${rankingSlug}/${entrySlug}`} className="text-[15px] font-black text-fuku-black">{item.name} 〉</a>
-        <p className="mt-1 text-[18px] font-black text-fuku-red">{withVoteDelta(displayVotes(themeId, item), voteDelta)}</p>
-        <div className="mt-3 grid grid-cols-[44px_1fr] gap-2">
-          <button
-            type="button"
-            onClick={save}
-            className="grid min-h-[40px] place-items-center rounded-[8px] border border-fuku-border"
-            aria-label={`${item.name}を保存`}
-          >
-            <Bookmark size={18} />
-          </button>
-          <RankingVoteButton rankingSlug={rankingSlug} entrySlug={entrySlug} onVoted={() => setVoteDelta((value) => value + 1)} />
+        <a href={href} className="line-clamp-1 text-[14px] font-black text-fuku-black">
+          {entry.name}
+        </a>
+        <p className="mt-1 text-[17px] font-black text-fuku-red">{(entry.votes + delta).toLocaleString("ja-JP")}票</p>
+        {!compact ? <p className="mt-1 line-clamp-2 text-[11px] font-bold leading-relaxed text-fuku-gray">{entry.description || entry.area}</p> : null}
+        <RankingPickedComments comments={entry.pickedComments} />
+        <div className="mt-3 grid grid-cols-2 gap-2">
+          <RankingVoteButton rankingSlug={theme.slug} entrySlug={entry.slug} compact onVoted={() => setDelta((value) => value + 1)} />
+          <a href={href} className="grid min-h-[32px] place-items-center rounded-[8px] border border-fuku-border text-[11px] font-black text-fuku-black">
+            詳細
+          </a>
         </div>
-        <RankingPickedComments comments={system?.entry.pickedComments} />
       </div>
     </article>
   );
 }
 
-function RankingListItem({ item, themeId }: { item: RankingItem; themeId: string }) {
-  const [voteDelta, setVoteDelta] = useState(0);
-  const rankingSlug = themeRouteSlug(themeId);
-  const entrySlug = entryRouteSlug(item.name);
-  const system = systemEntryFor(themeId, item.name);
-
+function EmptyRanking() {
   return (
-    <li className="grid grid-cols-[34px_1fr_auto] items-center gap-2 border-b border-fuku-border py-2">
-      <span className="text-center text-[19px] font-black text-fuku-black">{item.rank}</span>
-      <div className="min-w-0">
-        <a href={`/ranking/${rankingSlug}/${entrySlug}`} className="truncate text-[14px] font-black text-fuku-black">{item.name} 〉</a>
-        {item.note ? (
-          <span className="mt-1 inline-flex rounded-full bg-[#ffe1e1] px-2 py-1 text-[10px] font-black text-fuku-red">
-            {item.note}
-          </span>
-        ) : null}
-        <RankingPickedComments comments={system?.entry.pickedComments} />
-      </div>
-      <div className="flex items-center gap-2">
-        <span className="whitespace-nowrap text-[13px] font-black text-fuku-black">{withVoteDelta(displayVotes(themeId, item), voteDelta)}</span>
-        <button type="button" onClick={save} className="grid h-8 w-8 place-items-center rounded-[7px] border border-fuku-border" aria-label="保存">
-          <Bookmark size={15} />
-        </button>
-        <RankingVoteButton rankingSlug={rankingSlug} entrySlug={entrySlug} compact onVoted={() => setVoteDelta((value) => value + 1)} />
-      </div>
-    </li>
-  );
-}
-
-function SelectedRankingSection({ theme }: { theme: RankingTheme }) {
-  const top3 = theme.items.slice(0, 3);
-  const rest = theme.items.slice(3);
-
-  return (
-    <section className="border-t border-fuku-border bg-white px-4 py-5">
-      <div className="mb-4 flex items-start justify-between gap-4">
-        <div>
-          <h2 className="text-[26px] font-black text-fuku-black">{theme.title}</h2>
-          <p className="mt-1 text-[13px] font-black text-fuku-black">{theme.description}</p>
-          <p className="mt-2 text-[11px] font-bold text-fuku-gray">集計期間：{theme.period}</p>
-        </div>
-        <a href={`/ranking?theme=${theme.id}`} className="mt-2 shrink-0 rounded-full border border-fuku-border px-4 py-2 text-[11px] font-black text-fuku-black">
-          すべて見る 〉
-        </a>
-      </div>
-      <div className="grid grid-cols-3 gap-3">
-        {top3.map((item) => (
-          <RankingTopCard key={item.name} item={item} themeId={theme.id} />
-        ))}
-      </div>
-      <ol className="mt-4 rounded-[12px] border border-fuku-border bg-white px-3">
-        {rest.map((item) => (
-          <RankingListItem key={item.name} item={item} themeId={theme.id} />
-        ))}
-      </ol>
-    </section>
-  );
-}
-
-function RankingVoteBanner() {
-  return (
-    <section className="bg-white px-4 py-5">
-      <div className="relative overflow-hidden rounded-[16px] border border-[#f5caca] bg-[#fff1f1] p-5">
-        <div className="relative z-10 max-w-[282px] pr-16">
-          <p className="headline-condensed text-[36px] uppercase leading-none text-fuku-red">FUKU VOTE</p>
-          <h2 className="mt-2 text-[15px] font-black text-fuku-black">あなたの“いつもの福岡”を教えて！</h2>
-          <p className="mt-1 text-[12px] font-bold text-fuku-gray">みんなの投票で、ランキングが変わる！</p>
-          <button type="button" onClick={vote} className="mt-4 inline-flex min-h-[44px] items-center gap-2 rounded-full bg-fuku-red px-5 text-[12px] font-black text-white">
-            今すぐ投票する
-            <ArrowRight size={15} />
-          </button>
-        </div>
-        <div className="absolute -right-1 bottom-4 h-[92px] w-[52px] rotate-[10deg] rounded-[13px] border-[4px] border-fuku-black bg-white">
-          <div className="mx-auto mt-2 h-1 w-5 rounded-full bg-fuku-black" />
-          <div className="mx-auto mt-6 h-7 w-7 rounded-full bg-fuku-red/15" />
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function LatestComments() {
-  return (
-    <section className="bg-white px-4 py-2">
-      <h2 className="mb-3 flex items-center gap-2 text-[17px] font-black text-fuku-black">
-        <MessageCircle size={19} />
-        みんなの推しコメント
-      </h2>
-      <div className="no-scrollbar flex gap-3 overflow-x-auto pb-3">
-        {comments.map((comment) => (
-          <article key={comment.target} className="min-w-[210px] rounded-[12px] border border-fuku-border bg-white p-4">
-            <p className="text-[34px] font-black leading-none text-fuku-red/25">“</p>
-            <p className="-mt-3 text-[13px] font-bold leading-relaxed text-fuku-black">{comment.text}</p>
-            <p className="mt-4 text-[11px] font-black text-fuku-black">● {comment.target}</p>
-          </article>
-        ))}
-      </div>
-    </section>
-  );
-}
-
-function RankingThemeRequest() {
-  return (
-    <section className="bg-white px-4 pb-28 pt-4">
-      <div className="rounded-[14px] border border-dashed border-fuku-red bg-white p-4">
-        <h2 className="flex items-center gap-2 text-[17px] font-black text-fuku-black">
-          <Edit3 size={18} className="text-fuku-red" />
-          次に見たいランキングを教えて！
-        </h2>
+    <section className="bg-white px-4 py-8">
+      <div className="rounded-[18px] border border-dashed border-fuku-border bg-[#fbfaf7] p-8 text-center">
+        <p className="headline-condensed text-[30px] uppercase leading-none text-fuku-black">COMING SOON</p>
+        <h2 className="mt-3 text-[18px] font-black text-fuku-black">ランキングは準備中です</h2>
         <p className="mt-2 text-[12px] font-bold leading-relaxed text-fuku-gray">
-          福岡で好きなプリン、雨の日に行きたい場所、一人暮らしにおすすめの街など、次に作ってほしいランキングを募集しています。
+          管理画面で公開されたランキングが登録されると、ここに表示されます。
         </p>
-        <div className="mt-4 rounded-[10px] bg-fuku-light px-4 py-3 text-[11px] font-bold text-fuku-gray">
-          例）福岡で好きなプリン / 雨の日に行きたい場所 / 一人暮らしにおすすめの街
-        </div>
-        <a
-          href="/forms/ranking-theme"
-          className="mt-4 flex min-h-[44px] w-full items-center justify-center gap-2 rounded-full bg-fuku-red text-[13px] font-black text-white"
-        >
-          テーマを提案する
-          <Edit3 size={15} />
-        </a>
       </div>
     </section>
   );
@@ -582,114 +195,172 @@ function RankingThemeRequest() {
 export default function RankingPage() {
   const searchParams = useSearchParams();
   const [cms, setCms] = useState<RankingCmsData>(() => getDefaultRankingCmsData());
+  const [themes, setThemes] = useState<RankingThemeView[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<CategoryId>("daily");
-  const [selectedRanking, setSelectedRanking] = useState("supermarket");
-  const themes = rankingThemes[selectedCategory];
-  const selectedTheme = themes.find((theme) => theme.id === selectedRanking) ?? themes[0];
-  const mode = searchParams.get("mode");
-
-  useEffect(() => {
-    let mounted = true;
-    void getPublishedRankingAsync().then((published) => {
-      if (!mounted) return;
-      setCms(published);
-      if (rankingThemes[published.defaultTab as CategoryId]) {
-        setSelectedCategory(published.defaultTab as CategoryId);
-        setSelectedRanking(rankingThemes[published.defaultTab as CategoryId][0].id);
-      }
-    });
-    return () => {
-      mounted = false;
-    };
-  }, []);
-
-  useEffect(() => {
-    const category = searchParams.get("category") as CategoryId | null;
-    const themeParam = searchParams.get("theme");
-    const aliasedTheme = themeParam ? (rankingThemeAliases[themeParam] ?? themeParam) : null;
-    const nextCategory =
-      category && rankingThemes[category]
-        ? category
-        : aliasedTheme
-          ? (Object.keys(rankingThemes).find((key) =>
-              rankingThemes[key as CategoryId].some((theme) => theme.id === aliasedTheme),
-            ) as CategoryId | undefined)
-          : undefined;
-
-    if (nextCategory) {
-      setSelectedCategory(nextCategory);
-      const nextTheme = aliasedTheme && rankingThemes[nextCategory].some((theme) => theme.id === aliasedTheme)
-        ? aliasedTheme
-        : rankingThemes[nextCategory][0].id;
-      setSelectedRanking(nextTheme);
-    }
-  }, [searchParams]);
-
-  const visibleCategories = cms.tabs
-    .filter((tab) => tab.isVisible && rankingThemes[tab.id as CategoryId])
-    .map((tab) => ({ id: tab.id as CategoryId, label: tab.label }));
-  const categoriesForTabs = visibleCategories.length ? visibleCategories : rankingCategories;
-
-  function handleCategory(category: CategoryId) {
-    setSelectedCategory(category);
-    setSelectedRanking(rankingThemes[category][0].id);
-  }
-
-  return (
-    <div className="mx-auto min-h-screen max-w-[430px] bg-white shadow-phone">
-      <Header />
-      <main>
-        <RankingHero cms={cms} />
-        <RankingCategoryTabs selectedCategory={selectedCategory} onSelect={handleCategory} categories={categoriesForTabs} />
-        {mode === "vote" ? <VoteModePanel themes={themes} onSelect={setSelectedRanking} /> : null}
-        <PickupRankingThemes
-          themes={themes}
-          selectedRanking={selectedTheme.id}
-          onSelect={setSelectedRanking}
-        />
-        <SelectedRankingSection theme={selectedTheme} />
-        <RankingCommentSection rankingSlug={themeRouteSlug(selectedTheme.id)} title={selectedTheme.title} />
-        <RankingVoteBanner />
-        <LatestComments />
-        <RankingThemeRequest />
-      </main>
-      <BottomNav active="ranking" />
-      <PageToastBridge />
-    </div>
-  );
-}
-
-function VoteModePanel({ themes, onSelect }: { themes: RankingTheme[]; onSelect: (id: string) => void }) {
-  return (
-    <section className="border-b border-fuku-border bg-[#fff1f1] px-4 py-4">
-      <h2 className="text-[17px] font-black text-fuku-black">投票できるランキング</h2>
-      <div className="mt-3 grid grid-cols-2 gap-2">
-        {themes.map((theme) => (
-          <button
-            key={theme.id}
-            type="button"
-            onClick={() => onSelect(theme.id)}
-            className="min-h-[46px] rounded-[10px] bg-white px-3 text-left text-[12px] font-black text-fuku-black"
-          >
-            {theme.title}
-          </button>
-        ))}
-      </div>
-    </section>
-  );
-}
-
-function PageToastBridge() {
+  const [selectedThemeSlug, setSelectedThemeSlug] = useState("");
   const { showToast, ToastViewport } = useToast();
 
   useEffect(() => {
-    const handler = (event: Event) => {
-      const message = (event as CustomEvent<string>).detail;
-      showToast(message);
-    };
-    window.addEventListener("fuku-toast", handler);
-    return () => window.removeEventListener("fuku-toast", handler);
-  }, [showToast]);
+    let mounted = true;
+    Promise.all([
+      getPublishedRankingAsync(),
+      fetch("/api/content/rankings", { cache: "no-store" }).then((response) => (response.ok ? response.json() : { items: [] })),
+    ])
+      .then(([publishedCms, data]: [RankingCmsData, { items?: ApiRankingTheme[] }]) => {
+        if (!mounted) return;
+        const nextThemes = normalizeThemes(data.items ?? []);
+        setCms(publishedCms);
+        setThemes(nextThemes);
 
-  return <ToastViewport />;
+        const queryCategory = searchParams.get("category") as CategoryId | null;
+        const queryTheme = searchParams.get("theme");
+        const initialCategory =
+          queryCategory && rankingCategories.some((category) => category.id === queryCategory)
+            ? queryCategory
+            : normalizeCategory(publishedCms.defaultTab);
+        const themeFromQuery = queryTheme ? nextThemes.find((theme) => theme.slug === queryTheme || theme.id === queryTheme) : undefined;
+        const themeForCategory = nextThemes.find((theme) => theme.category === initialCategory) ?? nextThemes[0];
+        setSelectedCategory(themeFromQuery?.category ?? initialCategory);
+        setSelectedThemeSlug(themeFromQuery?.slug ?? themeForCategory?.slug ?? "");
+      })
+      .catch(() => {
+        if (!mounted) return;
+        setThemes([]);
+        showToast("ランキングの読み込みに失敗しました");
+      });
+    return () => {
+      mounted = false;
+    };
+  }, [searchParams, showToast]);
+
+  const visibleCategories = useMemo(() => {
+    const cmsTabs = cms.tabs
+      .filter((tab) => tab.isVisible)
+      .map((tab) => ({ id: normalizeCategory(tab.id), label: tab.label }));
+    return cmsTabs.length ? cmsTabs : rankingCategories;
+  }, [cms.tabs]);
+
+  const categoryThemes = themes.filter((theme) => theme.category === selectedCategory);
+  const selectedTheme = categoryThemes.find((theme) => theme.slug === selectedThemeSlug) ?? categoryThemes[0] ?? themes[0];
+
+  function selectCategory(category: CategoryId) {
+    setSelectedCategory(category);
+    setSelectedThemeSlug(themes.find((theme) => theme.category === category)?.slug ?? "");
+  }
+
+  return (
+    <div className="mx-auto min-h-screen max-w-[430px] bg-fuku-bg shadow-phone">
+      <Header />
+      <main className="pb-28">
+        <section className="border-b border-fuku-border bg-white px-5 py-7">
+          <h1 className="headline-condensed text-[50px] uppercase leading-none text-fuku-black">{cms.heroTitle}</h1>
+          <p className="mt-3 text-[15px] font-black leading-relaxed text-fuku-red">{cms.heroSubtitle}</p>
+          <p className="mt-2 text-[12px] font-bold leading-relaxed text-fuku-gray">
+            公開中のランキングだけを表示しています。管理画面で作成・公開するとここに反映されます。
+          </p>
+        </section>
+
+        <section className="sticky top-[112px] z-20 border-b border-fuku-border bg-white px-4 py-4">
+          <div className="grid grid-cols-5 overflow-hidden rounded-full border border-fuku-border bg-white shadow-soft">
+            {visibleCategories.map((category) => (
+              <button
+                key={category.id}
+                type="button"
+                onClick={() => selectCategory(category.id)}
+                className={`min-h-[42px] text-[11px] font-black ${
+                  selectedCategory === category.id ? "bg-fuku-red text-white" : "text-fuku-black"
+                }`}
+              >
+                {category.label}
+              </button>
+            ))}
+          </div>
+        </section>
+
+        {!themes.length ? (
+          <EmptyRanking />
+        ) : (
+          <>
+            <section className="bg-white px-4 py-5">
+              <h2 className="mb-4 flex items-center gap-2 text-[18px] font-black text-fuku-black">
+                <Crown size={20} className="text-fuku-red" />
+                公開中ランキング
+              </h2>
+              {!categoryThemes.length ? (
+                <div className="rounded-[16px] border border-dashed border-fuku-border bg-[#fbfaf7] p-6 text-center">
+                  <p className="text-[16px] font-black text-fuku-black">このカテゴリのランキングは準備中です</p>
+                </div>
+              ) : (
+                <div className="no-scrollbar flex gap-3 overflow-x-auto pb-1">
+                  {categoryThemes.map((theme) => {
+                    const Icon = theme.icon;
+                    const active = selectedTheme?.slug === theme.slug;
+                    return (
+                      <button
+                        key={theme.slug}
+                        type="button"
+                        onClick={() => setSelectedThemeSlug(theme.slug)}
+                        className={`min-w-[180px] rounded-[14px] border bg-white p-3 text-left ${
+                          active ? "border-fuku-red" : "border-fuku-border"
+                        }`}
+                      >
+                        <Icon size={22} className="text-fuku-red" />
+                        <h3 className="mt-3 text-[15px] font-black text-fuku-black">{theme.title}</h3>
+                        <p className="mt-1 line-clamp-2 text-[11px] font-bold leading-relaxed text-fuku-gray">{theme.description}</p>
+                        <p className="mt-3 text-[10px] font-black text-fuku-red">TOP10を表示</p>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </section>
+
+            {selectedTheme ? (
+              <section className="border-t border-fuku-border bg-white px-4 py-5">
+                <div className="mb-4">
+                  <h2 className="text-[28px] font-black leading-tight text-fuku-black">{selectedTheme.title}</h2>
+                  <p className="mt-2 text-[13px] font-bold leading-relaxed text-fuku-gray">{selectedTheme.description}</p>
+                  {selectedTheme.period ? <p className="mt-2 text-[11px] font-bold text-fuku-gray">集計期間：{selectedTheme.period}</p> : null}
+                </div>
+                {selectedTheme.entries.length ? (
+                  <div className="grid gap-3">
+                    <div className="grid grid-cols-3 gap-2">
+                      {selectedTheme.entries.slice(0, 3).map((entry) => (
+                        <EntryCard key={entry.slug} theme={selectedTheme} entry={entry} compact />
+                      ))}
+                    </div>
+                    <div className="rounded-[14px] border border-fuku-border bg-white">
+                      {selectedTheme.entries.slice(3, 10).map((entry) => (
+                        <div key={entry.slug} className="grid grid-cols-[32px_1fr_auto] items-center gap-2 border-b border-fuku-border p-3 last:border-b-0">
+                          <span className="text-center text-[18px] font-black text-fuku-black">{entry.rank}</span>
+                          <a href={`/ranking/${selectedTheme.slug}/${entry.slug}`} className="min-w-0">
+                            <span className="block truncate text-[14px] font-black text-fuku-black">{entry.name}</span>
+                            <span className="block text-[11px] font-bold text-fuku-gray">{entry.votes.toLocaleString("ja-JP")}票</span>
+                          </a>
+                          <div className="flex items-center gap-2">
+                            <RankingVoteButton rankingSlug={selectedTheme.slug} entrySlug={entry.slug} compact />
+                            <a href={`/ranking/${selectedTheme.slug}/${entry.slug}`} className="rounded-[8px] border border-fuku-border px-3 py-2 text-[11px] font-black">
+                              詳細
+                            </a>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="rounded-[16px] border border-dashed border-fuku-border bg-[#fbfaf7] p-6 text-center">
+                    <p className="text-[16px] font-black text-fuku-black">候補は準備中です</p>
+                  </div>
+                )}
+              </section>
+            ) : null}
+
+            {selectedTheme ? <RankingCommentSection rankingSlug={selectedTheme.slug} title={selectedTheme.title} /> : null}
+          </>
+        )}
+      </main>
+      <BottomNav active="ranking" />
+      <ToastViewport />
+    </div>
+  );
 }

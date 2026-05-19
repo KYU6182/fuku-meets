@@ -301,7 +301,6 @@ function getEditConfig(kind: EditableKind, id?: string) {
         { label: "本文Markdown", type: "textarea" as const, value: news?.body ?? "" },
         { label: "ガイドカテゴリ", type: "select" as const, value: (news as any)?.guideCategory ?? "visitor", options: ["visitor", "live", "solo", "women", "tourism", "shop"] },
         { label: "タグ", value: news?.tags?.join(", ") ?? "" },
-        { label: "関連MEET", value: "" },
         { label: "関連ランキング", value: "" },
         { label: "関連FUKU ICONS", value: news?.relatedIconIds?.join(", ") ?? "" },
         { label: "表示順", type: "number" as const, value: String((news as any)?.displayOrder ?? 0) },
@@ -422,7 +421,7 @@ function buildPayload(kind: EditableKind, id: string | undefined, values: Record
       excerpt: values["抜粋"],
       body: values["本文Markdown"],
       tags: splitList(values["タグ"]),
-      relatedMeetIds: splitList(values["関連MEET"]),
+      relatedMeetIds: [],
       relatedRankingIds: splitList(values["関連ランキング"]),
       relatedIconIds: splitList(values["関連FUKU ICONS"]),
       publishedAt: values["公開日"],
@@ -566,9 +565,8 @@ function NewsExtraEditor({ values, onChange }: { values: Record<string, string>;
   const set = (key: string, value: string) => onChange({ ...values, [key]: value });
   return (
     <section className="space-y-3 rounded-[14px] border border-fuku-border bg-[#fbfaf7] p-4">
-      <h3 className="text-[16px] font-black text-fuku-black">ライブ情報 / MEET連携</h3>
-      <p className="text-[11px] font-bold text-fuku-gray">カテゴリを「今週のライブ情報」にすると、記事詳細で関連MEET CTAを表示するためのデータとして保存します。</p>
-      <AdminFormField label="関連MEET" value={values["関連MEET"] ?? ""} onChange={(value) => set("関連MEET", value)} />
+      <h3 className="text-[16px] font-black text-fuku-black">記事メタ情報</h3>
+      <p className="text-[11px] font-bold text-fuku-gray">記事本文はMarkdownで管理します。関連MEET表示は現在HOME/NEWS公開側では非表示です。</p>
       <AdminFormField label="関連ランキング" value={values["関連ランキング"] ?? ""} onChange={(value) => set("関連ランキング", value)} />
       <AdminFormField label="会場" value={values["会場"] ?? ""} onChange={(value) => set("会場", value)} />
       <AdminFormField label="アーティスト名" value={values["アーティスト名"] ?? ""} onChange={(value) => set("アーティスト名", value)} />
@@ -599,7 +597,7 @@ function MediaPanel() {
 }
 
 function HomeEditorPanel() {
-  const sections = ["FV画像 / タイトル / CTA", "FUKU ICONS表示人物", "HOMEランキング表示テーマ", "WEEKEND GUIDE表示カテゴリ", "NEW IN FUKUOKAカード", "MAGAZINEバナー", "PICK UP CONTENTS"];
+  const sections = ["FV画像 / タイトル / CTA", "TONIGHT IN FUKUOKA", "FUKUOKA RANKING", "FUKU ICONS / PEOPLE", "LOCAL MEDIA / NEWS", "MAGAZINEバナー", "FOLLOW US"];
   return (
     <div className="mb-5 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
       {sections.map((section) => (

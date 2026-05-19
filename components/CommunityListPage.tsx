@@ -1,6 +1,5 @@
 "use client";
 
-import { CalendarPlus } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import BottomNav from "./BottomNav";
 import CommunityCard from "./CommunityCard";
@@ -31,10 +30,6 @@ export default function CommunityListPage() {
             <h1 className="headline-condensed mt-5 text-[44px] uppercase leading-none text-fuku-black">MEETS</h1>
             <p className="mt-2 text-[16px] font-black text-fuku-black">気の合う仲間と、最高の時間を。</p>
           </div>
-          <a href="/meet/create" className="mt-7 inline-flex min-h-[44px] shrink-0 items-center gap-2 rounded-[10px] bg-fuku-red px-4 text-[12px] font-black text-white">
-            <CalendarPlus size={16} />
-            MEETを作る
-          </a>
         </div>
 
         <div className="mt-7 flex gap-2 overflow-x-auto pb-1">
@@ -59,14 +54,6 @@ export default function CommunityListPage() {
         <div className="mt-4 grid gap-3">
           {filtered.map((community) => <CommunityCard key={community.id} community={community} />)}
         </div>
-        <a href="/meet/create" className="mt-6 flex min-h-[78px] items-center gap-4 rounded-[14px] border border-fuku-border bg-white p-4 shadow-soft">
-          <span className="grid h-12 w-12 place-items-center rounded-full bg-[#fff1f1] text-fuku-red"><CalendarPlus size={24} /></span>
-          <span className="min-w-0 flex-1">
-            <span className="block text-[15px] font-black text-fuku-black">あなたもMEETを作ってみませんか？</span>
-            <span className="mt-1 block text-[11px] font-bold text-fuku-gray">好きなテーマで仲間を集めて、最高の時間をつくろう！</span>
-          </span>
-          <span className="text-fuku-red">→</span>
-        </a>
       </main>
       <BottomNav active="meet" />
     </div>

@@ -6,49 +6,6 @@ import type { HomeCmsData } from "@/types/cms";
 
 const chips = ["新店舗", "特集", "インタビュー", "ライブ後ガイド", "遠征ガイド", "街のトレンド"];
 
-const listArticles = [
-  {
-    image: "/images/news-1.jpg",
-    title: "今月オープン！薬院の注目カフェ3選",
-    description: "朝も夜も使える新店を編集部がチェック。",
-    date: "2024.05.19",
-    tags: ["薬院", "新店舗"],
-    href: "/news/local-news-fukuoka-now",
-    category: "新店舗",
-    relatedMeetIds: [],
-  },
-  {
-    image: "/images/news-2.jpg",
-    title: "福岡のライブハウス最新事情【2024年版】",
-    description: "ライブ後の動き方までまとめました。",
-    date: "2024.05.18",
-    tags: ["音楽", "ライブ"],
-    href: "/news/fukuoka-food-feature",
-    category: "今週のライブ情報",
-    relatedMeetIds: ["creep-hype-live-drink"],
-  },
-  {
-    image: "/images/news-3.jpg",
-    title: "地元民が通う！博多の屋台おすすめマップ",
-    description: "遠征勢にもすすめたい夜ごはんガイド。",
-    date: "2024.05.17",
-    tags: ["博多", "屋台"],
-    href: "/news/area-guide-fukuoka",
-    category: "遠征ガイド",
-    relatedMeetIds: [],
-  },
-  {
-    image: "/images/weekend-night.jpg",
-    title: "5月の福岡イベントまとめ｜音楽・グルメ・アート",
-    description: "今週末の予定を立てる前にチェック。",
-    date: "2024.05.16",
-    tags: ["イベント", "週末"],
-    href: "/news",
-    category: "街のトレンド",
-    relatedMeetIds: [],
-  },
-];
-
 type ApiNews = {
   slug?: string;
   title?: string;
@@ -66,7 +23,6 @@ type ApiNews = {
 };
 
 function normalizeArticles(items: ApiNews[]) {
-  if (!items.length) return listArticles;
   return items.slice(0, 5).map((item, index) => ({
     image: item.image || item.coverImageUrl || "/images/news-1.jpg",
     title: item.title || `NEWS ${index + 1}`,
@@ -80,17 +36,17 @@ function normalizeArticles(items: ApiNews[]) {
 }
 
 export default function LocalMediaSection({ cms }: { cms?: HomeCmsData["localMedia"] }) {
-  const [articles, setArticles] = useState(() => normalizeArticles([]));
+  const [articles, setArticles] = useState<ReturnType<typeof normalizeArticles>>([]);
 
   useEffect(() => {
     let mounted = true;
     fetch("/api/content/news", { cache: "no-store" })
       .then((response) => (response.ok ? response.json() : Promise.reject(new Error("failed"))))
       .then((data: { items?: ApiNews[] }) => {
-        if (mounted && data.items?.length) setArticles(normalizeArticles(data.items));
+        if (mounted) setArticles(normalizeArticles(data.items ?? []));
       })
       .catch(() => {
-        if (mounted) setArticles(normalizeArticles([]));
+        if (mounted) setArticles([]);
       });
     return () => {
       mounted = false;
@@ -99,7 +55,7 @@ export default function LocalMediaSection({ cms }: { cms?: HomeCmsData["localMed
 
   if (cms?.isVisible === false) return null;
   const mainArticle = articles[0];
-  const articleList = articles.slice(1).length ? articles.slice(1) : listArticles;
+  const articleList = articles.slice(1);
 
   return (
     <section className="border-y border-fuku-border bg-white px-5 py-8">
@@ -120,24 +76,30 @@ export default function LocalMediaSection({ cms }: { cms?: HomeCmsData["localMed
         ))}
       </div>
 
-      <a
-        href={mainArticle.href}
-        className="relative mt-5 block min-h-[234px] overflow-hidden rounded-[16px] bg-fuku-light bg-cover bg-center shadow-soft"
-        style={{ backgroundImage: `linear-gradient(180deg,rgba(0,0,0,.08),rgba(0,0,0,.72)),url('${mainArticle.image}')` }}
-      >
-        <div className="absolute inset-x-0 bottom-0 p-4 text-white">
-          <span className="rounded-[4px] bg-fuku-red px-2 py-1 text-[10px] font-black">{mainArticle.category}</span>
-          <h3 className="mt-3 text-[22px] font-black leading-tight">{mainArticle.title}</h3>
-          <p className="mt-2 text-[12px] font-bold leading-relaxed">{mainArticle.description}</p>
-          <div className="mt-3 flex flex-wrap gap-2 text-[10px] font-black">
-            <span>{mainArticle.date}</span>
-            {mainArticle.tags.map((tag) => (
-              <span key={tag}>{tag}</span>
-            ))}
+      {mainArticle ? (
+        <a
+          href={mainArticle.href}
+          className="relative mt-5 block min-h-[234px] overflow-hidden rounded-[16px] bg-fuku-light bg-cover bg-center shadow-soft"
+          style={{ backgroundImage: `linear-gradient(180deg,rgba(0,0,0,.08),rgba(0,0,0,.72)),url('${mainArticle.image}')` }}
+        >
+          <div className="absolute inset-x-0 bottom-0 p-4 text-white">
+            <span className="rounded-[4px] bg-fuku-red px-2 py-1 text-[10px] font-black">{mainArticle.category}</span>
+            <h3 className="mt-3 text-[22px] font-black leading-tight">{mainArticle.title}</h3>
+            <p className="mt-2 text-[12px] font-bold leading-relaxed">{mainArticle.description}</p>
+            <div className="mt-3 flex flex-wrap gap-2 text-[10px] font-black">
+              <span>{mainArticle.date}</span>
+              {mainArticle.tags.map((tag) => (
+                <span key={tag}>{tag}</span>
+              ))}
+            </div>
           </div>
-          {mainArticle.relatedMeetIds.length ? <span className="mt-3 inline-block rounded-full bg-white px-3 py-2 text-[10px] font-black text-fuku-red">この記事から参加できるMEET</span> : null}
+        </a>
+      ) : (
+        <div className="mt-5 rounded-[16px] border border-dashed border-fuku-border bg-[#fbfaf7] p-6 text-center">
+          <p className="text-[18px] font-black text-fuku-black">記事は準備中です</p>
+          <p className="mt-2 text-[12px] font-bold text-fuku-gray">近日公開</p>
         </div>
-      </a>
+      )}
 
       <div className="mt-4 grid gap-3">
         {articleList.map((article) => (

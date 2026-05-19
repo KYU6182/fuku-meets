@@ -1,37 +1,18 @@
 "use client";
 
 import {
-  ArrowRight,
   BadgeCheck,
   Bookmark,
-  Coffee,
-  MapPin,
-  Moon,
-  Music,
   ShieldCheck,
   Star,
   Users,
-  Wine,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import CommunityGenderRatio from "@/components/CommunityGenderRatio";
 import CommunityParticipantAvatars from "@/components/CommunityParticipantAvatars";
-import { defaultCommunities, getPublishedCommunitiesAsync, meetCategories } from "@/lib/communityMeet";
+import { defaultCommunities, getPublishedCommunitiesAsync } from "@/lib/communityMeet";
 import type { HomeCmsData } from "@/types/cms";
 import type { CommunityMeet } from "@/types/communityMeet";
-
-const iconMap = {
-  music: Music,
-  "drink-now": Wine,
-  midnight: Moon,
-  girls: Users,
-  solo: BadgeCheck,
-  visitor: MapPin,
-  "cafe-work": Coffee,
-  sauna: Users,
-};
-
-const requestedCategories = ["music", "drink-now", "midnight", "girls", "solo"];
 
 function formatDate(community: CommunityMeet) {
   return `${community.date.slice(5).replace("-", ".")} ${community.startTime}〜`;
@@ -61,7 +42,7 @@ function MiniPickupCard({ community }: { community: CommunityMeet }) {
         style={meetImageStyle(community)}
       >
         <span className="absolute left-2 top-2 rounded-[4px] bg-fuku-black px-2 py-1 text-[10px] font-black text-white">
-          {community.category}
+          MEET
         </span>
       </div>
       <div className="p-3">
@@ -93,7 +74,7 @@ function CommunityListCard({ community }: { community: CommunityMeet }) {
         style={meetImageStyle(community)}
       >
         <span className="absolute left-2 top-2 rounded-[4px] bg-fuku-black px-2 py-1 text-[9px] font-black text-white">
-          {community.category}
+          MEET
         </span>
         <span className="absolute right-2 top-2 rounded-full bg-white/90 p-2 text-fuku-black">
           <Bookmark size={17} />
@@ -145,12 +126,6 @@ export default function TonightInFukuokaSection({ cms }: { cms?: HomeCmsData["to
   if (cms?.isVisible === false) return null;
   const featured = communities.slice(0, 3);
   const listed = communities.slice(0, 5);
-  const categoryIds = cms?.categoryIds?.length ? cms.categoryIds : requestedCategories;
-  const categories = categoryIds
-    .map((id) => meetCategories.find((item) => item.id === id))
-    .filter(Boolean)
-    .slice(0, 5) as typeof meetCategories;
-
   return (
     <section className="border-y border-fuku-border bg-white px-5 py-9">
       <div className="flex items-start justify-between gap-3">
@@ -165,18 +140,6 @@ export default function TonightInFukuokaSection({ cms }: { cms?: HomeCmsData["to
         <a href={cms?.ctaHref ?? "/meet"} className="mt-2 shrink-0 text-[12px] font-black text-fuku-black">
           {cms?.ctaText ?? "すべて見る"} →
         </a>
-      </div>
-
-      <div className="mt-6 flex gap-3 overflow-x-auto pb-1 [scrollbar-width:none]">
-        {categories.map((category) => {
-          const Icon = iconMap[category.id as keyof typeof iconMap] ?? Users;
-          return (
-            <a key={category.id} href={`/meet?category=${encodeURIComponent(category.label)}`} className="grid min-h-[112px] min-w-[116px] place-items-center rounded-[12px] border border-fuku-border bg-white p-3 text-center shadow-soft">
-              <Icon className="text-fuku-red" size={32} strokeWidth={2.4} />
-              <span className="mt-2 text-[13px] font-black leading-tight text-fuku-black">{category.label}</span>
-            </a>
-          );
-        })}
       </div>
 
       <div className="mt-7 rounded-[18px] bg-fuku-black p-4 text-white">
@@ -218,16 +181,6 @@ export default function TonightInFukuokaSection({ cms }: { cms?: HomeCmsData["to
           ))}
         </div>
       </div>
-
-      <a href="/visitor" className="mt-4 flex items-center justify-between gap-3 rounded-[16px] border border-fuku-border bg-white p-4 shadow-soft">
-        <div>
-          <p className="text-[15px] font-black text-fuku-black">遠征・観光で福岡に来た人へ</p>
-          <p className="mt-1 text-[11px] font-bold leading-relaxed text-fuku-gray">おすすめスポットや当日参加OKのMEETを紹介！</p>
-        </div>
-        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-fuku-black text-white">
-          <ArrowRight size={17} />
-        </span>
-      </a>
 
       <div className="mt-4 grid grid-cols-4 gap-2 rounded-[14px] border border-fuku-border bg-white p-3 text-center">
         {[

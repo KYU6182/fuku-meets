@@ -1,4 +1,3 @@
-import { adminIcons, adminNews, adminRankings } from "@/lib/adminData";
 import { getSupabaseAnonClient } from "@/lib/supabase/server";
 
 type RouteContext = {
@@ -12,24 +11,7 @@ function isKind(kind: string): kind is ContentKind {
 }
 
 function fallback(kind: ContentKind) {
-  if (kind === "news") return adminNews.map((item) => ({
-    ...item,
-    image: item.image,
-    summary: item.excerpt,
-    date: item.publishedAt,
-    body: item.body.split(/\n\n+/),
-  }));
-  if (kind === "icons") return adminIcons.map((item, index) => ({
-    ...item,
-    rank: index + 1,
-    image: item.image,
-    attention: `${Math.max(70, 99 - index * 3).toFixed(1)}%`,
-    copy: item.profile,
-    tags: [item.category, item.area],
-    favoriteSpots: [],
-    comments: [],
-  }));
-  return adminRankings;
+  return [];
 }
 
 export async function GET(request: Request, context: RouteContext) {

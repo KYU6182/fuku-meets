@@ -2,6 +2,7 @@
 
 import { ArrowRight, Building2, Moon, ShoppingBasket, Train } from "lucide-react";
 import { useEffect, useState } from "react";
+import RankingVoteButton from "./RankingVoteButton";
 import type { HomeCmsData } from "@/types/cms";
 
 type RankingEntry = {
@@ -10,6 +11,8 @@ type RankingEntry = {
   votes: string;
   image: string;
   href: string;
+  rankingSlug: string;
+  entrySlug: string;
 };
 
 type RankingTheme = {
@@ -47,9 +50,9 @@ const rankingThemes: RankingTheme[] = [
     icon: ShoppingBasket,
     href: "/ranking?theme=supermarket",
     entries: [
-      { rank: 1, name: "ボンラパス", votes: "1,842票", image: "/images/ranking/super-bonrepas.jpg", href: "/ranking/supermarket/bon-repas" },
-      { rank: 2, name: "ハローデイ", votes: "1,233票", image: "/images/ranking/super-halloday.jpg", href: "/ranking/supermarket/halloday" },
-      { rank: 3, name: "サニー", votes: "987票", image: "/images/ranking/super-sunny.jpg", href: "/ranking/supermarket/sunny" },
+      { rank: 1, name: "ボンラパス", votes: "1,842票", image: "/images/ranking/super-bonrepas.jpg", href: "/ranking/supermarket/bon-repas", rankingSlug: "supermarket", entrySlug: "bon-repas" },
+      { rank: 2, name: "ハローデイ", votes: "1,233票", image: "/images/ranking/super-halloday.jpg", href: "/ranking/supermarket/halloday", rankingSlug: "supermarket", entrySlug: "halloday" },
+      { rank: 3, name: "サニー", votes: "987票", image: "/images/ranking/super-sunny.jpg", href: "/ranking/supermarket/sunny", rankingSlug: "supermarket", entrySlug: "sunny" },
     ],
   },
   {
@@ -59,9 +62,9 @@ const rankingThemes: RankingTheme[] = [
     icon: Train,
     href: "/ranking?theme=station",
     entries: [
-      { rank: 1, name: "薬院駅", votes: "2,169票", image: "/images/ranking/station-yakuin.jpg", href: "/ranking/station/yakuin-station" },
-      { rank: 2, name: "天神駅", votes: "1,732票", image: "/images/ranking/station-tenjin.jpg", href: "/ranking/station/tenjin-station" },
-      { rank: 3, name: "博多駅", votes: "1,421票", image: "/images/ranking/station-hakata.jpg", href: "/ranking/station/hakata-station" },
+      { rank: 1, name: "薬院駅", votes: "2,169票", image: "/images/ranking/station-yakuin.jpg", href: "/ranking/station/yakuin-station", rankingSlug: "station", entrySlug: "yakuin-station" },
+      { rank: 2, name: "天神駅", votes: "1,732票", image: "/images/ranking/station-tenjin.jpg", href: "/ranking/station/tenjin-station", rankingSlug: "station", entrySlug: "tenjin-station" },
+      { rank: 3, name: "博多駅", votes: "1,421票", image: "/images/ranking/station-hakata.jpg", href: "/ranking/station/hakata-station", rankingSlug: "station", entrySlug: "hakata-station" },
     ],
   },
   {
@@ -71,9 +74,9 @@ const rankingThemes: RankingTheme[] = [
     icon: Building2,
     href: "/ranking?theme=city",
     entries: [
-      { rank: 1, name: "薬院", votes: "1,876票", image: "/images/ranking/city-yakuin.jpg", href: "/ranking/area/yakuin" },
-      { rank: 2, name: "大名", votes: "1,312票", image: "/images/ranking/city-daimyo.jpg", href: "/ranking/area/daimyo" },
-      { rank: 3, name: "六本松", votes: "1,089票", image: "/images/ranking/city-ropponmatsu.jpg", href: "/ranking/area/ropponmatsu" },
+      { rank: 1, name: "薬院", votes: "1,876票", image: "/images/ranking/city-yakuin.jpg", href: "/ranking/area/yakuin", rankingSlug: "area", entrySlug: "yakuin" },
+      { rank: 2, name: "大名", votes: "1,312票", image: "/images/ranking/city-daimyo.jpg", href: "/ranking/area/daimyo", rankingSlug: "area", entrySlug: "daimyo" },
+      { rank: 3, name: "六本松", votes: "1,089票", image: "/images/ranking/city-ropponmatsu.jpg", href: "/ranking/area/ropponmatsu", rankingSlug: "area", entrySlug: "ropponmatsu" },
     ],
   },
   {
@@ -83,9 +86,9 @@ const rankingThemes: RankingTheme[] = [
     icon: Moon,
     href: "/ranking?theme=late-night",
     entries: [
-      { rank: 1, name: "セブンイレブン", votes: "2,243票", image: "/images/ranking/night-seven.jpg", href: "/ranking/late-night/seven-eleven" },
-      { rank: 2, name: "TRIAL GO", votes: "1,498票", image: "/images/ranking/night-trial.jpg", href: "/ranking/late-night/trial-go" },
-      { rank: 3, name: "すき家", votes: "1,205票", image: "/images/ranking/night-sukiya.jpg", href: "/ranking/late-night/sukiya" },
+      { rank: 1, name: "セブンイレブン", votes: "2,243票", image: "/images/ranking/night-seven.jpg", href: "/ranking/late-night/seven-eleven", rankingSlug: "late-night", entrySlug: "seven-eleven" },
+      { rank: 2, name: "TRIAL GO", votes: "1,498票", image: "/images/ranking/night-trial.jpg", href: "/ranking/late-night/trial-go", rankingSlug: "late-night", entrySlug: "trial-go" },
+      { rank: 3, name: "すき家", votes: "1,205票", image: "/images/ranking/night-sukiya.jpg", href: "/ranking/late-night/sukiya", rankingSlug: "late-night", entrySlug: "sukiya" },
     ],
   },
 ];
@@ -98,7 +101,6 @@ function iconForTheme(id: string) {
 }
 
 function normalizeThemes(items: ApiRankingTheme[]): RankingTheme[] {
-  if (!items.length) return rankingThemes;
   return items
     .filter((item) => item.title)
     .slice(0, 4)
@@ -116,6 +118,8 @@ function normalizeThemes(items: ApiRankingTheme[]): RankingTheme[] {
           votes: `${Number(entry.votes ?? 0).toLocaleString("ja-JP")}票`,
           image: entry.image || entry.thumbnailUrl || "/images/ranking/super-bonrepas.jpg",
           href: `/ranking/${id}/${entry.slug || entry.name || index + 1}`,
+          rankingSlug: id,
+          entrySlug: entry.slug || String(index + 1),
         })),
       };
     });
@@ -138,26 +142,29 @@ function TopCard({ entry }: { entry: RankingEntry }) {
       <div className="p-2">
         <a href={entry.href} className="line-clamp-1 text-[12px] font-black leading-tight text-fuku-black">{entry.name}</a>
         <p className="mt-1 text-[10px] font-black text-fuku-gray">{entry.votes}</p>
-        <a href="/ranking?mode=vote" className="mt-2 block rounded-full border border-fuku-red px-2 py-1 text-center text-[10px] font-black text-fuku-red">
-          投票
-        </a>
+        <div className="mt-2 grid grid-cols-2 gap-1">
+          <RankingVoteButton rankingSlug={entry.rankingSlug} entrySlug={entry.entrySlug} compact />
+          <a href={entry.href} className="rounded-full border border-fuku-border px-2 py-1 text-center text-[10px] font-black text-fuku-black">
+            詳細
+          </a>
+        </div>
       </div>
     </div>
   );
 }
 
 export default function RankingMeetSection({ cms }: { cms?: HomeCmsData["ranking"] }) {
-  const [themes, setThemes] = useState<RankingTheme[]>(rankingThemes);
+  const [themes, setThemes] = useState<RankingTheme[]>([]);
 
   useEffect(() => {
     let mounted = true;
     fetch("/api/content/rankings", { cache: "no-store" })
       .then((response) => (response.ok ? response.json() : Promise.reject(new Error("failed"))))
       .then((data: { items?: ApiRankingTheme[] }) => {
-        if (mounted && data.items?.length) setThemes(normalizeThemes(data.items));
+        if (mounted) setThemes(normalizeThemes(data.items ?? []));
       })
       .catch(() => {
-        if (mounted) setThemes(rankingThemes);
+        if (mounted) setThemes([]);
       });
     return () => {
       mounted = false;
@@ -172,7 +179,7 @@ export default function RankingMeetSection({ cms }: { cms?: HomeCmsData["ranking
       <p className="mt-2 text-[12px] font-bold leading-relaxed text-fuku-gray">{cms?.description ?? "暮らしの中で見つけた、リアルに助かる・通いたくなるお気に入りをシェアしよう。"}</p>
 
       <div className="mt-6 grid gap-3">
-        {themes.map((theme) => {
+        {themes.length ? themes.map((theme) => {
           const Icon = theme.icon;
           return (
             <article key={theme.id} className="rounded-[12px] border border-[#eadfd8] bg-white p-3 shadow-soft">
@@ -184,7 +191,7 @@ export default function RankingMeetSection({ cms }: { cms?: HomeCmsData["ranking
                     <p className="mt-1 text-[10px] font-bold leading-relaxed text-fuku-gray">{theme.description}</p>
                   </div>
                 </div>
-                <a href={theme.href} className="shrink-0 text-[10px] font-black text-fuku-black">すべて見る ＞</a>
+                <a href={theme.href} className="shrink-0 text-[10px] font-black text-fuku-black">詳細 ＞</a>
               </div>
               <div className="mt-3 grid grid-cols-3 gap-2">
                 {theme.entries.map((entry) => (
@@ -193,17 +200,12 @@ export default function RankingMeetSection({ cms }: { cms?: HomeCmsData["ranking
               </div>
             </article>
           );
-        })}
-      </div>
-
-      <div className="mt-5 rounded-[12px] border border-[#f5caca] bg-[#fff1f1] p-4">
-        <p className="headline-condensed text-[28px] uppercase leading-none text-fuku-red">FUKUOKA RANKING</p>
-        <h3 className="mt-2 text-[18px] font-black leading-tight text-fuku-black">あなたの“いつもの福岡”を教えて！</h3>
-        <p className="mt-1 text-[12px] font-bold text-fuku-gray">みんなの投票で、ランキングが変わる！</p>
-        <a href="/ranking" className="mt-4 inline-flex min-h-[44px] items-center gap-2 rounded-full bg-fuku-red px-6 text-[12px] font-black text-white">
-          今すぐ投票する
-          <ArrowRight size={15} />
-        </a>
+        }) : (
+          <div className="rounded-[16px] border border-dashed border-fuku-border bg-[#fbfaf7] p-6 text-center">
+            <p className="text-[18px] font-black text-fuku-black">ランキングは準備中です</p>
+            <p className="mt-2 text-[12px] font-bold text-fuku-gray">公開されたランキングが登録されると、ここに表示されます。</p>
+          </div>
+        )}
       </div>
 
       <a href={cms?.ctaHref ?? "/ranking"} className="mx-auto mt-6 flex min-h-[48px] w-4/5 items-center justify-center gap-3 rounded-full bg-fuku-red text-[14px] font-black text-white">

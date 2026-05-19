@@ -10,8 +10,6 @@ import HomeFollowUsSection from "@/components/HomeFollowUsSection";
 import LocalMediaSection from "@/components/LocalMediaSection";
 import PaperSection from "@/components/PaperSection";
 import RankingMeetSection from "@/components/RankingMeetSection";
-import SafetyCommunitySection from "@/components/SafetyCommunitySection";
-import StartGuideSection from "@/components/StartGuideSection";
 import TonightInFukuokaSection from "@/components/TonightInFukuokaSection";
 import { getDefaultHomeCmsData, getPublishedHomeAsync } from "@/lib/cms";
 import type { HomeCmsData, HomeSectionId } from "@/types/cms";
@@ -28,6 +26,25 @@ const footerLinks = [
   { title: "参加する", links: ["店舗推薦", "ランキングテーマ提案", "フリーペーパー設置申請"] },
   { title: "FUKU ICONS", links: ["一般エントリー", "推しを推薦", "表紙投票"] },
 ];
+
+const visibleHomeSectionOrder: HomeSectionId[] = [
+  "hero",
+  "tonight",
+  "ranking",
+  "fukuIcons",
+  "localMedia",
+  "magazine",
+  "followUs",
+];
+
+function sanitizeHomeOrder(order: HomeSectionId[]) {
+  const allowed = new Set<HomeSectionId>(visibleHomeSectionOrder);
+  const ordered = order.filter((sectionId) => allowed.has(sectionId));
+  return [
+    ...ordered,
+    ...visibleHomeSectionOrder.filter((sectionId) => !ordered.includes(sectionId)),
+  ];
+}
 
 export default function HomePageClient({ initialCms }: { initialCms?: HomeCmsData }) {
   const [cms, setCms] = useState<HomeCmsData>(() => initialCms ?? getDefaultHomeCmsData());
@@ -55,9 +72,9 @@ export default function HomePageClient({ initialCms }: { initialCms?: HomeCmsDat
       case "localMedia":
         return <LocalMediaSection cms={cms.localMedia} />;
       case "startGuide":
-        return <StartGuideSection cms={cms.startGuide} />;
+        return null;
       case "safety":
-        return <SafetyCommunitySection cms={cms.safety} />;
+        return null;
       case "magazine":
         return <PaperSection cms={cms.magazine} />;
       case "followUs":
@@ -71,7 +88,7 @@ export default function HomePageClient({ initialCms }: { initialCms?: HomeCmsDat
     <div className="mx-auto min-h-screen max-w-[430px] bg-white shadow-phone">
       <Header />
       <main>
-        {cms.sectionOrder.map((sectionId) => (
+        {sanitizeHomeOrder(cms.sectionOrder).map((sectionId) => (
           <div key={sectionId}>{renderSection(sectionId)}</div>
         ))}
       </main>

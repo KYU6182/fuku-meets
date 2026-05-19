@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRight, Heart, MapPin } from "lucide-react";
+import { ArrowRight, MapPin } from "lucide-react";
 import { useEffect, useState } from "react";
 import IconVoteButton from "./IconVoteButton";
 import type { HomeCmsData } from "@/types/cms";
@@ -32,12 +32,6 @@ type RankedIcon = {
   attentionScore?: string | number;
 };
 
-const defaultRanking: RankedIcon[] = [
-  { rank: 1, name: "YUI", genre: "model / creator", area: "天神エリア", votes: "2,430票", votesNumber: 2430, image: "/images/icons/yui.jpg", href: "/icons/yui", slug: "yui", profile: "福岡から全国へ。いま注目したい次世代アイコン。", attentionScore: "98.7" },
-  { rank: 2, name: "RENA", genre: "model", area: "大名エリア", votes: "1,982票", votesNumber: 1982, image: "/images/icons/rena.jpg", href: "/icons/rena", slug: "rena", profile: "", attentionScore: "95.4" },
-  { rank: 3, name: "ANNA", genre: "model", area: "天神エリア", votes: "1,540票", votesNumber: 1540, image: "/images/icons/anna.jpg", href: "/icons/anna", slug: "anna", profile: "", attentionScore: "91.2" },
-];
-
 type ApiIcon = {
   slug?: string;
   name?: string;
@@ -65,7 +59,6 @@ function rerankIcons(items: RankedIcon[]) {
 }
 
 function normalizeIcons(items: ApiIcon[]) {
-  if (!items.length) return defaultRanking;
   return rerankIcons(
     items
       .map((item, index) => ({
@@ -92,17 +85,17 @@ const badgeClass: Record<number, string> = {
 };
 
 export default function FukuIconsSection({ cms }: FukuIconsSectionProps) {
-  const [ranking, setRanking] = useState(() => normalizeIcons([]));
+  const [ranking, setRanking] = useState<RankedIcon[]>([]);
 
   useEffect(() => {
     let mounted = true;
     fetch("/api/content/icons", { cache: "no-store" })
       .then((response) => (response.ok ? response.json() : Promise.reject(new Error("failed"))))
       .then((data: { items?: ApiIcon[] }) => {
-        if (mounted && data.items?.length) setRanking(normalizeIcons(data.items));
+        if (mounted) setRanking(normalizeIcons(data.items ?? []));
       })
       .catch(() => {
-        if (mounted) setRanking(normalizeIcons([]));
+        if (mounted) setRanking([]);
       });
     return () => {
       mounted = false;
@@ -134,6 +127,13 @@ export default function FukuIconsSection({ cms }: FukuIconsSectionProps) {
         <a href={cms?.ctaHref ?? "/icons"} className="mt-2 shrink-0 text-[12px] font-black text-fuku-black">すべて見る →</a>
       </div>
 
+      {!weekly ? (
+        <div className="mt-5 rounded-[16px] border border-dashed border-fuku-border bg-[#fbfaf7] p-6 text-center">
+          <p className="text-[18px] font-black text-fuku-black">FUKU ICONSは準備中です</p>
+          <p className="mt-2 text-[12px] font-bold text-fuku-gray">公開されたアイコンが登録されると、ここに表示されます。</p>
+        </div>
+      ) : (
+      <>
       <article className="mt-5 overflow-hidden rounded-[16px] border border-fuku-border bg-white p-4 shadow-soft">
         <div className="flex items-center gap-2">
           <p className="headline-condensed text-[24px] uppercase leading-none text-fuku-black">WEEKLY ICON</p>
@@ -206,6 +206,9 @@ export default function FukuIconsSection({ cms }: FukuIconsSectionProps) {
           <ArrowRight size={18} />
         </span>
       </a>
+
+      </>
+      )}
 
     </section>
   );
