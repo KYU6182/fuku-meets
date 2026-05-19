@@ -7,6 +7,7 @@ export type NewsArticle = {
   image: string;
   summary: string;
   body: string[];
+  relatedMeetIds?: string[];
 };
 
 export const newsArticles = [
@@ -22,6 +23,7 @@ export const newsArticles = [
       "大名エリアに、夜の散歩途中にも立ち寄りやすい新スポットが登場しました。",
       "FUKU-MEETS編集部では、店内の雰囲気、使いやすい時間帯、近くのおすすめスポットをまとめて紹介します。",
     ],
+    relatedMeetIds: ["drink-now-tenjin", "midnight-nakasu-talk"],
   },
   {
     id: "fukuoka-food-feature",
@@ -35,6 +37,7 @@ export const newsArticles = [
       "今週は、保存数と投票が伸びている店を中心に編集部がセレクトしました。",
       "友達との夜ごはんにも、ひとり時間にも使いやすいお店を紹介しています。",
     ],
+    relatedMeetIds: ["yuru-cafe-yakuin", "girls-daimyo"],
   },
   {
     id: "area-guide-fukuoka",
@@ -48,6 +51,7 @@ export const newsArticles = [
       "福岡に来たばかりの人にも、もう少し深く街を知りたい人にも向けたエリアガイドです。",
       "買い物、ごはん、夜遊び、暮らしやすさの視点で、それぞれの街を見ていきます。",
     ],
+    relatedMeetIds: ["visitor-fukuoka-first-night", "creep-hype-live-drink"],
   },
 ] satisfies NewsArticle[];
 

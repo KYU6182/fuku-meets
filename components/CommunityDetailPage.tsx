@@ -6,10 +6,13 @@ import BottomNav from "./BottomNav";
 import CommunityGenderRatio from "./CommunityGenderRatio";
 import CommunityJoinButton from "./CommunityJoinButton";
 import Header from "./Header";
-import { defaultCommunities, getCommunityBySlugAsync } from "@/lib/communityMeet";
+import { defaultCommunities, getCommunityBySlugAsync, getCommunityParticipants } from "@/lib/communityMeet";
+import { shopGuides } from "@/lib/shopGuides";
+import { getCurrentUser } from "@/lib/userAuth";
 
 export default function CommunityDetailPage({ slug }: { slug: string }) {
   const [community, setCommunity] = useState(() => defaultCommunities.find((item) => item.slug === slug || item.id === slug) ?? defaultCommunities[0]);
+  const [isParticipant, setIsParticipant] = useState(false);
   useEffect(() => {
     let mounted = true;
     void getCommunityBySlugAsync(slug).then((item) => {
@@ -19,7 +22,13 @@ export default function CommunityDetailPage({ slug }: { slug: string }) {
       mounted = false;
     };
   }, [slug]);
+  useEffect(() => {
+    const user = getCurrentUser();
+    setIsParticipant(Boolean(user && getCommunityParticipants().some((item) => item.userId === user.userId && item.communityId === community.id && item.status === "joined")));
+  }, [community.id]);
   const heroImage = community.heroImage || community.image || "/images/meet/creep-live.jpg";
+  const publicLocation = community.publicAreaLabel ?? `${community.area}エリア`;
+  const relatedGuides = shopGuides.filter((guide) => guide.relatedMeetIds.includes(community.id)).slice(0, 3);
   return (
     <div className="mx-auto min-h-screen max-w-[430px] bg-[#fbfaf7] shadow-phone">
       <Header />
@@ -37,7 +46,7 @@ export default function CommunityDetailPage({ slug }: { slug: string }) {
           </div>
           <section className="-mt-3 rounded-[16px] border border-fuku-border bg-white p-5 shadow-soft">
             <h1 className="text-[34px] font-black leading-tight text-fuku-black">{community.title}</h1>
-            <p className="mt-2 text-[14px] font-black text-fuku-gray">{community.venueName}</p>
+            <p className="mt-2 text-[14px] font-black text-fuku-gray">{publicLocation}</p>
             <div className="mt-4 flex flex-wrap gap-2">
               {community.tags.slice(0, 3).map((tag) => (
                 <span key={tag} className="rounded-full bg-[#fff1f1] px-3 py-2 text-[11px] font-black text-fuku-red">{tag}</span>
@@ -46,7 +55,7 @@ export default function CommunityDetailPage({ slug }: { slug: string }) {
             <div className="mt-5 grid grid-cols-[1fr_104px] gap-4 rounded-[14px] border border-fuku-border p-4">
               <div className="grid gap-3 text-[13px] font-black text-fuku-black">
                 <span className="inline-flex items-center gap-2"><CalendarDays size={16} /> {community.date} {community.startTime}〜{community.endTime}</span>
-                <span className="inline-flex items-center gap-2"><MapPin size={16} /> {community.area}エリア（詳細は参加者に共有）</span>
+                <span className="inline-flex items-center gap-2"><MapPin size={16} /> {publicLocation}（店舗詳細は参加確定後に共有）</span>
                 <span className="inline-flex items-center gap-2"><Users size={16} /> 参加予定 {community.participantCount}人</span>
               </div>
               <CommunityGenderRatio maleRatio={community.maleRatio} femaleRatio={community.femaleRatio} size={76} />
@@ -58,6 +67,23 @@ export default function CommunityDetailPage({ slug }: { slug: string }) {
           <h2 className="text-[20px] font-black text-fuku-black">この会について</h2>
           <p className="mt-3 text-[13px] font-bold leading-relaxed text-fuku-black">{community.description}</p>
           <p className="mt-3 text-[12px] font-bold leading-relaxed text-fuku-gray">20歳未満の飲酒は禁止です。連絡先交換の強要、セクハラ、勧誘、迷惑行為は禁止です。</p>
+        </section>
+
+        <section className="mx-4 mt-4 rounded-[16px] border border-fuku-border bg-white p-5">
+          <h2 className="text-[20px] font-black text-fuku-black">店舗・集合場所</h2>
+          {isParticipant ? (
+            <div className="mt-3 space-y-2 rounded-[14px] bg-[#fbfaf7] p-4 text-[13px] font-bold leading-relaxed text-fuku-black">
+              <p><b>店舗名：</b>{community.participantVenueName || community.detailVenueName || "参加者向けに個別共有"}</p>
+              <p><b>住所：</b>{community.participantAddress || "参加者向けに個別共有"}</p>
+              <p><b>集合メモ：</b>{community.participantMemo || "開催前に詳しい案内をお送りします。"}</p>
+              {community.participantNotes ? <p><b>注意事項：</b>{community.participantNotes}</p> : null}
+            </div>
+          ) : (
+            <div className="mt-3 rounded-[14px] bg-[#fff1f1] p-4 text-[13px] font-bold leading-relaxed text-fuku-black">
+              <p className="font-black text-fuku-red">店舗詳細は参加確定後に共有されます</p>
+              <p className="mt-2">公開ページでは大まかなエリアだけを表示しています。初参加でも迷わないよう、参加後に詳しい店舗名・住所・集合メモ・予約名をお送りします。</p>
+            </div>
+          )}
         </section>
 
         <section className="mx-4 mt-4 rounded-[16px] border border-fuku-border bg-white p-5">
@@ -94,6 +120,23 @@ export default function CommunityDetailPage({ slug }: { slug: string }) {
             ))}
           </div>
         </section>
+
+        {relatedGuides.length ? (
+          <section className="mx-4 mt-4 rounded-[16px] border border-fuku-border bg-white p-5">
+            <h2 className="text-[20px] font-black text-fuku-black">関連ガイド</h2>
+            <div className="mt-4 grid gap-3">
+              {relatedGuides.map((guide) => (
+                <a key={guide.slug} href={`/shop-guides/${guide.slug}`} className="flex items-center gap-3 rounded-[12px] border border-fuku-border bg-[#fbfaf7] p-3">
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-[13px] font-black leading-tight text-fuku-black">{guide.title}</span>
+                    <span className="mt-1 block text-[10px] font-bold text-fuku-gray">{guide.category} / {guide.area}</span>
+                  </span>
+                  <span className="text-[18px] font-black">→</span>
+                </a>
+              ))}
+            </div>
+          </section>
+        ) : null}
 
         <div className="sticky bottom-[86px] z-30 mx-4 mt-5 rounded-[18px] bg-white/95 p-3 shadow-phone backdrop-blur">
           <CommunityJoinButton community={community} />

@@ -9,6 +9,11 @@ export type CommunityMeet = {
   area: string;
   venueName: string;
   detailVenueName?: string;
+  publicAreaLabel?: string;
+  participantVenueName?: string;
+  participantAddress?: string;
+  participantMemo?: string;
+  participantNotes?: string;
   venueVisibility: "public" | "participants_only";
   date: string;
   startTime: string;

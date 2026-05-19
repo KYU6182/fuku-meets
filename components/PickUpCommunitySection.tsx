@@ -24,7 +24,7 @@ export default function PickUpCommunitySection({ cms }: { cms?: LegacyPickupComm
         <div className="mt-4 flex items-center justify-between gap-3">
           <div>
             <p className="headline-condensed text-[34px] uppercase leading-none">{cms?.title ?? "PICK UP"}</p>
-            <p className="mt-2 text-[18px] font-black">{cms?.subtitle ?? "注目のコミュニティ"}</p>
+            <p className="mt-2 text-[18px] font-black">{cms?.subtitle ?? "注目のMEET"}</p>
           </div>
           <a href={cms?.ctaHref ?? "/meet"} className="text-[12px] font-black text-white">{cms?.ctaText ?? "すべて見る"} →</a>
         </div>

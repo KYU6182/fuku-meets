@@ -19,11 +19,11 @@ export function AdminCommunitiesPage() {
     };
   }, []);
   return (
-    <AdminLayout title="COMMUNITY管理">
+    <AdminLayout title="MEET管理">
       <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
         <div>
-          <p className="text-[12px] font-black uppercase tracking-widest text-fuku-red">MEET / COMMUNITY</p>
-          <h2 className="mt-1 text-[28px] font-black text-fuku-black">コミュニティ一覧</h2>
+          <p className="text-[12px] font-black uppercase tracking-widest text-fuku-red">MEET</p>
+          <h2 className="mt-1 text-[28px] font-black text-fuku-black">MEET一覧</h2>
           <p className="mt-1 text-[13px] font-bold text-fuku-gray">開催予定、参加人数、男女比、幹事、公開状態を管理します。</p>
         </div>
         <a href="/admin/communities/new" className="min-h-[44px] rounded-full bg-fuku-red px-5 py-3 text-[13px] font-black text-white">新規作成</a>
@@ -50,7 +50,7 @@ export function AdminCommunityParticipantsPage() {
         rows={getCommunityParticipants()}
         columns={[
           { header: "参加者", render: (item) => item.displayName },
-          { header: "コミュニティID", render: (item) => item.communityId },
+          { header: "MEET ID", render: (item) => item.communityId },
           { header: "ステータス", render: (item) => item.status },
           { header: "登録日", render: (item) => item.createdAt },
         ]}
@@ -61,7 +61,7 @@ export function AdminCommunityParticipantsPage() {
 
 export function AdminCommunityReviewsPage() {
   return (
-    <AdminLayout title="コミュニティレビュー">
+    <AdminLayout title="MEETレビュー">
       <AdminTable
         rows={getCommunityReviews()}
         columns={[

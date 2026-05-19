@@ -18,6 +18,11 @@ type CommunityFormState = Pick<
   | "area"
   | "venueName"
   | "detailVenueName"
+  | "publicAreaLabel"
+  | "participantVenueName"
+  | "participantAddress"
+  | "participantMemo"
+  | "participantNotes"
   | "date"
   | "startTime"
   | "endTime"
@@ -54,6 +59,11 @@ function toFormState(item?: CommunityMeet): CommunityFormState {
     area: source.area,
     venueName: source.venueName,
     detailVenueName: source.detailVenueName ?? "",
+    publicAreaLabel: source.publicAreaLabel ?? source.venueName,
+    participantVenueName: source.participantVenueName ?? source.detailVenueName ?? "",
+    participantAddress: source.participantAddress ?? "",
+    participantMemo: source.participantMemo ?? "",
+    participantNotes: source.participantNotes ?? source.notices?.join("\n") ?? "",
     date: source.date,
     startTime: source.startTime,
     endTime: source.endTime,
@@ -151,8 +161,13 @@ export default function AdminCommunityForm({ mode }: { mode: "new" | "edit" }) {
           <AdminFormField label="スラッグ" value={form.slug} onChange={(value) => setField("slug", slugify(value))} placeholder={previewSlug} />
           <AdminFormField label="カテゴリ" value={form.category} onChange={(value) => setField("category", value)} placeholder="音楽・ライブ" />
           <AdminFormField label="エリア" value={form.area} onChange={(value) => setField("area", value)} placeholder="天神" />
-          <AdminFormField label="集合場所" value={form.venueName} onChange={(value) => setField("venueName", value)} placeholder="参加者にのみ共有" />
-          <AdminFormField label="参加確定者だけに表示する詳細場所" value={form.detailVenueName ?? ""} onChange={(value) => setField("detailVenueName", value)} placeholder="店舗名・住所など" />
+          <AdminFormField label="公開用エリア" value={form.publicAreaLabel ?? ""} onChange={(value) => setField("publicAreaLabel", value)} placeholder="天神エリア / Zepp Fukuoka周辺" />
+          <AdminFormField label="公開用集合エリア" value={form.venueName} onChange={(value) => setField("venueName", value)} placeholder="参加者にのみ共有" />
+          <AdminFormField label="参加後に表示する店舗名" value={form.participantVenueName ?? ""} onChange={(value) => setField("participantVenueName", value)} placeholder="店舗名（参加確定者のみ）" />
+          <AdminFormField label="参加後に表示する住所" value={form.participantAddress ?? ""} onChange={(value) => setField("participantAddress", value)} placeholder="住所（参加確定者のみ）" />
+          <AdminFormField label="参加後に表示する集合メモ" value={form.participantMemo ?? ""} onChange={(value) => setField("participantMemo", value)} placeholder="予約名・集合目印など" />
+          <AdminFormField label="参加後に表示する注意事項" value={form.participantNotes ?? ""} onChange={(value) => setField("participantNotes", value)} placeholder="遅刻時の連絡、入店方法など" />
+          <AdminFormField label="旧 詳細場所" value={form.detailVenueName ?? ""} onChange={(value) => setField("detailVenueName", value)} placeholder="互換用" />
           <AdminFormField label="開催日" type="date" value={form.date} onChange={(value) => setField("date", value)} />
           <AdminFormField label="開始時間" value={form.startTime} onChange={(value) => setField("startTime", value)} placeholder="21:30" />
           <AdminFormField label="終了時間" value={form.endTime} onChange={(value) => setField("endTime", value)} placeholder="24:30" />

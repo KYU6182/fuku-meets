@@ -37,12 +37,28 @@ function formatDate(community: CommunityMeet) {
   return `${community.date.slice(5).replace("-", ".")} ${community.startTime}〜`;
 }
 
+function meetImageStyle(community: CommunityMeet) {
+  if (community.image) {
+    return { backgroundImage: `linear-gradient(180deg,rgba(0,0,0,.03),rgba(0,0,0,.28)),url('${community.image}')` };
+  }
+  const fallback = community.category.includes("音楽")
+    ? "linear-gradient(135deg,#101828,#2f7dd1)"
+    : community.category.includes("飲み")
+      ? "linear-gradient(135deg,#25110b,#e85b61)"
+      : community.category.includes("カフェ")
+        ? "linear-gradient(135deg,#eadfd8,#8b6f58)"
+        : community.category.includes("女子")
+          ? "linear-gradient(135deg,#fff1f1,#e83b75)"
+          : "linear-gradient(135deg,#111111,#334155)";
+  return { backgroundImage: fallback };
+}
+
 function MiniPickupCard({ community }: { community: CommunityMeet }) {
   return (
     <a href={`/meet/${community.slug}`} className="block min-w-[178px] overflow-hidden rounded-[12px] bg-white text-fuku-black shadow-soft">
       <div
         className="relative h-[104px] bg-fuku-light bg-cover bg-center"
-        style={{ backgroundImage: `linear-gradient(180deg,rgba(0,0,0,.04),rgba(0,0,0,.32)),url('${community.image}')` }}
+        style={meetImageStyle(community)}
       >
         <span className="absolute left-2 top-2 rounded-[4px] bg-fuku-black px-2 py-1 text-[10px] font-black text-white">
           {community.category}
@@ -71,42 +87,42 @@ function MiniPickupCard({ community }: { community: CommunityMeet }) {
 
 function CommunityListCard({ community }: { community: CommunityMeet }) {
   return (
-    <a href={`/meet/${community.slug}`} className="grid grid-cols-[104px_1fr_78px] overflow-hidden rounded-[14px] border border-fuku-border bg-white shadow-soft">
+    <a href={`/meet/${community.slug}`} className="block overflow-hidden rounded-[16px] border border-fuku-border bg-white shadow-soft">
       <div
-        className="relative min-h-[142px] bg-fuku-light bg-cover bg-center"
-        style={{ backgroundImage: `linear-gradient(180deg,rgba(0,0,0,.02),rgba(0,0,0,.3)),url('${community.image}')` }}
+        className="relative aspect-[16/9] bg-fuku-light bg-cover bg-center"
+        style={meetImageStyle(community)}
       >
         <span className="absolute left-2 top-2 rounded-[4px] bg-fuku-black px-2 py-1 text-[9px] font-black text-white">
           {community.category}
         </span>
+        <span className="absolute right-2 top-2 rounded-full bg-white/90 p-2 text-fuku-black">
+          <Bookmark size={17} />
+        </span>
       </div>
-      <div className="min-w-0 p-3">
-        <h3 className="line-clamp-1 text-[16px] font-black leading-tight text-fuku-black">{community.title}</h3>
-        <p className="mt-1 line-clamp-1 text-[11px] font-bold text-fuku-gray">{community.description}</p>
-        <div className="mt-2 flex flex-wrap gap-1">
+      <div className="grid gap-3 p-3">
+        <div>
+          <h3 className="line-clamp-1 text-[17px] font-black leading-tight text-fuku-black">{community.title}</h3>
+          <p className="mt-1 line-clamp-1 text-[11px] font-bold text-fuku-gray">{community.description}</p>
+        </div>
+        <div className="flex flex-wrap gap-1">
           {community.tags.slice(0, 3).map((tag) => (
             <span key={tag} className="rounded-full bg-[#fff1f1] px-2 py-1 text-[9px] font-black text-fuku-red">
               {tag}
             </span>
           ))}
         </div>
-        <div className="mt-3 grid gap-1 text-[10px] font-black text-fuku-black">
-          <span>{formatDate(community)}</span>
-          <span>{community.area}エリア</span>
-          <span>
-            参加予定 <b className="text-fuku-red">{community.participantCount}人</b>
-          </span>
-        </div>
-        <div className="mt-2">
-          <CommunityParticipantAvatars count={community.participantCount} />
-        </div>
-      </div>
-      <div className="relative border-l border-fuku-border px-2 py-3">
-        <button type="button" aria-label="保存" className="absolute right-2 top-2 text-fuku-black">
-          <Bookmark size={18} />
-        </button>
-        <div className="mt-7">
-          <CommunityGenderRatio maleRatio={community.maleRatio} femaleRatio={community.femaleRatio} size={56} />
+        <div className="grid grid-cols-[1fr_76px] gap-3 border-t border-fuku-border pt-3">
+          <div className="grid gap-1 text-[10px] font-black text-fuku-black">
+            <span>{formatDate(community)}</span>
+            <span>{community.publicAreaLabel ?? `${community.area}エリア`}</span>
+            <span>
+              参加予定 <b className="text-fuku-red">{community.participantCount}人</b>
+            </span>
+            <div className="mt-1">
+              <CommunityParticipantAvatars count={community.participantCount} />
+            </div>
+          </div>
+          <CommunityGenderRatio maleRatio={community.maleRatio} femaleRatio={community.femaleRatio} size={54} />
         </div>
       </div>
     </a>
@@ -143,7 +159,7 @@ export default function TonightInFukuokaSection({ cms }: { cms?: HomeCmsData["to
             <h2 className="headline-condensed text-[37px] uppercase leading-none text-fuku-black">{cms?.title ?? "TONIGHT IN FUKUOKA"}</h2>
             {(cms?.showNewBadge ?? true) ? <span className="rounded-[6px] bg-fuku-red px-3 py-1 text-[11px] font-black text-white">NEW</span> : null}
           </div>
-          <p className="mt-3 text-[15px] font-black leading-relaxed text-fuku-black">{cms?.subtitle ?? "今日の気分や趣味で集まれるコミュニティ。"}</p>
+          <p className="mt-3 text-[15px] font-black leading-relaxed text-fuku-black">{cms?.subtitle ?? "今日の気分や趣味で参加できるMEET。"}</p>
           <p className="mt-1 text-[12px] font-bold leading-relaxed text-fuku-gray">{cms?.description ?? "初めてでも安心して参加できます。素敵な出会いを楽しもう！"}</p>
         </div>
         <a href={cms?.ctaHref ?? "/meet"} className="mt-2 shrink-0 text-[12px] font-black text-fuku-black">
@@ -167,7 +183,7 @@ export default function TonightInFukuokaSection({ cms }: { cms?: HomeCmsData["to
         <div className="flex items-start justify-between gap-3">
           <div>
             <span className="rounded-[4px] bg-fuku-red px-2 py-1 text-[10px] font-black tracking-widest text-white">PICK UP</span>
-            <h3 className="mt-3 text-[24px] font-black leading-tight">注目のコミュニティ</h3>
+            <h3 className="mt-3 text-[24px] font-black leading-tight">注目のMEET</h3>
           </div>
           <a href="/meet" className="mt-2 shrink-0 text-[12px] font-black text-white">
             すべて見る →

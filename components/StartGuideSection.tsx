@@ -3,7 +3,7 @@ import type { HomeCmsData } from "@/types/cms";
 
 const guideCards = [
   { title: "はじめて使う人へ", description: "FUKU-MEETSの楽しみ方", href: "/start-guide", icon: Sparkles },
-  { title: "今日参加できるMEET", description: "一人参加OK・女性参加あり", href: "/meet", icon: MapPin },
+  { title: "今日参加できるMEET", description: "一人参加OK・女性参加あり", href: "/meet/today", icon: MapPin },
   { title: "ランキングから探す", description: "みんなの“好き”から店とMEETを見つける", href: "/ranking", icon: Trophy },
 ];
 

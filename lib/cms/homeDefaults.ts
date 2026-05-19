@@ -146,7 +146,7 @@ export function getDefaultHomeCmsData(): HomeCmsData {
     tonight: {
       id: "tonight",
       title: "TONIGHT IN FUKUOKA",
-      subtitle: "今日の気分や趣味で集まれるコミュニティ。",
+      subtitle: "今日の気分や趣味で参加できるMEET。",
       description: "初めてでも安心して参加できます。素敵な出会いを楽しもう。",
       showNewBadge: true,
       categoryIds: ["music", "drink-now", "midnight", "girls", "solo", "visitor", "cafe-work"],
