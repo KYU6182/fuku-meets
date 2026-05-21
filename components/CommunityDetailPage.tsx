@@ -15,7 +15,7 @@ import BottomNav from "./BottomNav";
 import CommunityGenderRatio from "./CommunityGenderRatio";
 import CommunityJoinButton from "./CommunityJoinButton";
 import Header from "./Header";
-import { defaultCommunities, getCommunityBySlugAsync, getCommunityParticipants } from "@/lib/communityMeet";
+import { defaultCommunities, getCommunityBySlugAsync } from "@/lib/communityMeet";
 import type { CommunityMeet } from "@/types/communityMeet";
 import { getCurrentUser } from "@/lib/userAuth";
 
@@ -74,8 +74,23 @@ export default function CommunityDetailPage({ slug }: { slug: string }) {
 
   useEffect(() => {
     const user = getCurrentUser();
-    setIsParticipant(Boolean(user && getCommunityParticipants().some((item) => item.userId === user.userId && item.communityId === community.id && item.status === "joined")));
-  }, [community.id]);
+    if (!user) {
+      setIsParticipant(false);
+      return;
+    }
+    let mounted = true;
+    void fetch(`/api/mypage/chats?userId=${encodeURIComponent(user.userId)}&meetSlug=${encodeURIComponent(community.slug)}`, { cache: "no-store" })
+      .then((response) => (response.ok ? response.json() : null))
+      .then((payload) => {
+        if (mounted) setIsParticipant(Boolean(payload?.confirmed));
+      })
+      .catch(() => {
+        if (mounted) setIsParticipant(false);
+      });
+    return () => {
+      mounted = false;
+    };
+  }, [community.slug]);
 
   const heroImage = community.heroImage || community.image || "/images/meet/creep-live.jpg";
   const publicLocation = community.publicAreaLabel ?? `${community.area}エリア`;
@@ -240,14 +255,21 @@ export default function CommunityDetailPage({ slug }: { slug: string }) {
             <MessageCircle size={20} />
             <h2 className="text-[21px] font-black text-fuku-black">参加後チャット</h2>
           </div>
-          <p className="mt-3 text-[13px] font-bold leading-relaxed text-fuku-gray">参加者だけが見られる当日用チャットです。ライブ後の合流、遅刻連絡、物販状況などをゆるく共有できます。</p>
-          <div className="mt-4 space-y-2 rounded-[14px] bg-[#fbfaf7] p-4 text-[12px] font-bold text-fuku-black blur-[1px]">
-            <p className="rounded-[12px] bg-white p-3">鹿児島から今新幹線乗りました！</p>
-            <p className="rounded-[12px] bg-white p-3">物販の並びエグいです笑</p>
-            <p className="rounded-[12px] bg-white p-3">終演後、天神向かいます！</p>
+          <p className="mt-3 text-[13px] font-bold leading-relaxed text-fuku-gray">
+            参加確定後、マイページでチャットが使えます。ライブ後の合流、遅刻連絡、物販状況などを参加者だけで共有できます。
+          </p>
+          <div className="mt-4 rounded-[14px] border border-dashed border-fuku-border bg-[#fbfaf7] p-4 text-center">
+            <LockKeyhole className="mx-auto text-fuku-red" size={24} />
+            <p className="mt-2 text-[13px] font-black text-fuku-black">参加確定後に利用できます</p>
+            <p className="mt-1 text-[11px] font-bold leading-relaxed text-fuku-gray">
+              MEET詳細ページにはチャット本体を置かず、参加者専用チャットはマイページで安全に管理します。
+            </p>
           </div>
-          <a href="/mypage/meets" className="mt-3 flex min-h-[44px] items-center justify-center gap-2 rounded-full border border-fuku-border bg-white text-[12px] font-black text-fuku-black">
-            <LockKeyhole size={15} /> 参加確定後にマイページで表示されます
+          <a
+            href={isParticipant ? `/mypage/meets/${community.slug}/chat` : "/mypage/chats"}
+            className="mt-3 flex min-h-[44px] items-center justify-center gap-2 rounded-full border border-fuku-border bg-white text-[12px] font-black text-fuku-black"
+          >
+            <LockKeyhole size={15} /> {isParticipant ? "チャットを見る" : "参加後にマイページで確認"}
           </a>
         </section>
 

@@ -47,7 +47,7 @@ export async function POST(request: Request) {
   const { data: order, error: orderError } = await supabase
     .from("meet_orders")
     .insert({
-      meet_id: meetRow?.id ?? meet.id,
+      meet_id: meetRow?.id ?? null,
       meet_slug: meet.slug,
       user_id: userId,
       email: input.email ?? null,

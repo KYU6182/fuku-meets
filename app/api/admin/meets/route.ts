@@ -71,7 +71,7 @@ export async function POST(request: Request) {
     const links = categoryIds.map((categoryId, index) => ({
       category_id: categoryId,
       meet_slug: content.slug,
-      sort_order: content.homeCategorySortOrder ?? index,
+      sort_order: Number(content.homeCategorySortOrder ?? 0) + index,
       is_pickup: content.homePickup ?? false,
     }));
     const { error: insertLinksError } = await supabase.from("meet_category_links").insert(links);

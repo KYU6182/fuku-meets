@@ -3,12 +3,12 @@
 import {
   BadgeCheck,
   Bookmark,
+  Briefcase,
   Camera,
   Handshake,
   HeartHandshake,
   ShieldCheck,
   Star,
-  Suitcase,
   Users,
 } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -125,7 +125,7 @@ const categoryIconMap: Record<string, typeof Users> = {
   "men-relaxed": Users,
   "women-safe": HeartHandshake,
   "new-fukuoka": Handshake,
-  expedition: Suitcase,
+  expedition: Briefcase,
   tourism: Camera,
 };
 
@@ -250,12 +250,6 @@ export default function TonightInFukuokaSection({ cms }: { cms?: HomeCmsData["to
             <CommunityListCard key={`${selectedCategory}-${community.id}`} community={community} />
           ))}
         </div>
-      </div>
-
-      <div className="mt-6 grid gap-3">
-        {communities.slice(3, 5).map((community) => (
-          <CommunityListCard key={community.id} community={community} />
-        ))}
       </div>
 
       <div className="mt-6 rounded-[16px] border border-fuku-border bg-[#fbfaf7] p-4">

@@ -11,6 +11,7 @@ export async function POST(request: Request) {
   if (!stripe || !webhookSecret) return Response.json({ error: "Stripe webhook is not configured" }, { status: 503 });
   if (!supabase) return Response.json({ error: "Supabase is not configured" }, { status: 503 });
   if (!signature) return Response.json({ error: "Missing Stripe signature" }, { status: 400 });
+  const admin = supabase;
 
   const rawBody = await request.text();
   let event: Stripe.Event;
@@ -26,7 +27,7 @@ export async function POST(request: Request) {
     const update = status === "expired"
       ? { status, canceled_at: now, updated_at: now }
       : { status, updated_at: now };
-    const { error } = await supabase
+    const { error } = await admin
       .from("meet_orders")
       .update(update)
       .eq("stripe_session_id", session.id)
@@ -37,7 +38,7 @@ export async function POST(request: Request) {
 
   if (event.type === "checkout.session.completed") {
     const session = event.data.object as Stripe.Checkout.Session;
-    const { data: order, error: orderError } = await supabase
+    const { data: order, error: orderError } = await admin
       .from("meet_orders")
       .select("*")
       .eq("stripe_session_id", session.id)
@@ -50,7 +51,7 @@ export async function POST(request: Request) {
       const displayName = metadata.displayName || session.customer_details?.name || "FUKU-MEETS USER";
       const avatarUrl = metadata.avatarUrl || "";
 
-      const { error: paidError } = await supabase
+      const { error: paidError } = await admin
         .from("meet_orders")
         .update({
           status: "paid",
@@ -62,7 +63,7 @@ export async function POST(request: Request) {
 
       if (paidError) return Response.json({ error: paidError.message }, { status: 500 });
 
-      const { data: existing, error: existingError } = await supabase
+      const { data: existing, error: existingError } = await admin
         .from("meet_participants")
         .select("id")
         .eq("meet_slug", order.meet_slug)
@@ -73,7 +74,7 @@ export async function POST(request: Request) {
       if (existingError) return Response.json({ error: existingError.message }, { status: 500 });
 
       if (!existing) {
-        const { error: participantError } = await supabase.from("meet_participants").insert({
+        const { error: participantError } = await admin.from("meet_participants").insert({
           meet_id: order.meet_id,
           meet_slug: order.meet_slug,
           user_id: order.user_id,
