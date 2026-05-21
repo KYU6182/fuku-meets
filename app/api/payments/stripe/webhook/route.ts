@@ -21,6 +21,20 @@ export async function POST(request: Request) {
     return Response.json({ error: message }, { status: 400 });
   }
 
+  async function markSession(status: "expired" | "failed", session: Stripe.Checkout.Session) {
+    const now = new Date().toISOString();
+    const update = status === "expired"
+      ? { status, canceled_at: now, updated_at: now }
+      : { status, updated_at: now };
+    const { error } = await supabase
+      .from("meet_orders")
+      .update(update)
+      .eq("stripe_session_id", session.id)
+      .neq("status", "paid");
+    if (error) return Response.json({ error: error.message }, { status: 500 });
+    return null;
+  }
+
   if (event.type === "checkout.session.completed") {
     const session = event.data.object as Stripe.Checkout.Session;
     const { data: order, error: orderError } = await supabase
@@ -76,6 +90,16 @@ export async function POST(request: Request) {
         if (participantError) return Response.json({ error: participantError.message }, { status: 500 });
       }
     }
+  }
+
+  if (event.type === "checkout.session.expired") {
+    const result = await markSession("expired", event.data.object as Stripe.Checkout.Session);
+    if (result) return result;
+  }
+
+  if (event.type === "checkout.session.async_payment_failed") {
+    const result = await markSession("failed", event.data.object as Stripe.Checkout.Session);
+    if (result) return result;
   }
 
   return Response.json({ received: true });

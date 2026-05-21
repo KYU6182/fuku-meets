@@ -3,16 +3,27 @@
 import {
   BadgeCheck,
   Bookmark,
+  Camera,
+  Handshake,
+  HeartHandshake,
   ShieldCheck,
   Star,
+  Suitcase,
   Users,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import CommunityGenderRatio from "@/components/CommunityGenderRatio";
 import CommunityParticipantAvatars from "@/components/CommunityParticipantAvatars";
-import { defaultCommunities, getPublishedCommunitiesAsync } from "@/lib/communityMeet";
+import {
+  defaultCommunities,
+  getFallbackCategoryMeets,
+  getPublishedCommunitiesAsync,
+  homeMeetCategories,
+} from "@/lib/communityMeet";
 import type { HomeCmsData } from "@/types/cms";
 import type { CommunityMeet } from "@/types/communityMeet";
+
+type MeetCategory = (typeof homeMeetCategories)[number];
 
 function formatDate(community: CommunityMeet) {
   return `${community.date.slice(5).replace("-", ".")} ${community.startTime}〜`;
@@ -110,8 +121,19 @@ function CommunityListCard({ community }: { community: CommunityMeet }) {
   );
 }
 
+const categoryIconMap: Record<string, typeof Users> = {
+  "men-relaxed": Users,
+  "women-safe": HeartHandshake,
+  "new-fukuoka": Handshake,
+  expedition: Suitcase,
+  tourism: Camera,
+};
+
 export default function TonightInFukuokaSection({ cms }: { cms?: HomeCmsData["tonight"] }) {
   const [communities, setCommunities] = useState(() => defaultCommunities.filter((community) => community.status === "published"));
+  const [categories, setCategories] = useState<MeetCategory[]>(() => homeMeetCategories.filter((category) => category.isVisible));
+  const [selectedCategory, setSelectedCategory] = useState("women-safe");
+  const [categoryCommunities, setCategoryCommunities] = useState<CommunityMeet[]>(() => getFallbackCategoryMeets("women-safe"));
 
   useEffect(() => {
     let mounted = true;
@@ -123,9 +145,42 @@ export default function TonightInFukuokaSection({ cms }: { cms?: HomeCmsData["to
     };
   }, []);
 
+  useEffect(() => {
+    let mounted = true;
+    void fetch("/api/meet-categories", { cache: "no-store" })
+      .then((response) => (response.ok ? response.json() : null))
+      .then((payload) => {
+        if (!mounted || !payload?.categories?.length) return;
+        setCategories(payload.categories);
+      })
+      .catch(() => undefined);
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    let mounted = true;
+    void fetch(`/api/meet-categories/${encodeURIComponent(selectedCategory)}/meets`, { cache: "no-store" })
+      .then((response) => (response.ok ? response.json() : null))
+      .then((payload) => {
+        if (!mounted) return;
+        const nextCommunities = payload?.communities?.length
+          ? (payload.communities as CommunityMeet[])
+          : getFallbackCategoryMeets(selectedCategory);
+        setCategoryCommunities(nextCommunities);
+      })
+      .catch(() => {
+        if (mounted) setCategoryCommunities(getFallbackCategoryMeets(selectedCategory));
+      });
+    return () => {
+      mounted = false;
+    };
+  }, [selectedCategory]);
+
   if (cms?.isVisible === false) return null;
   const featured = communities.slice(0, 3);
-  const listed = communities.slice(0, 5);
+  const selectedCategoryLabel = categories.find((category) => category.id === selectedCategory)?.label ?? "女の子同士で安心";
   return (
     <section className="border-y border-fuku-border bg-white px-5 py-9">
       <div className="flex items-start justify-between gap-3">
@@ -159,8 +214,46 @@ export default function TonightInFukuokaSection({ cms }: { cms?: HomeCmsData["to
         </div>
       </div>
 
+      <div className="mt-7">
+        <h3 className="text-[18px] font-black text-fuku-black">カテゴリで探す</h3>
+        <div className="mt-3 flex gap-3 overflow-x-auto pb-1 [scrollbar-width:none]">
+          {categories.map((category) => {
+            const Icon = categoryIconMap[category.id] ?? Users;
+            const isActive = category.id === selectedCategory;
+            return (
+              <button
+                key={category.id}
+                type="button"
+                onClick={() => setSelectedCategory(category.id)}
+                className={`grid min-h-[112px] min-w-[116px] place-items-center rounded-[14px] border px-3 py-4 text-center transition ${
+                  isActive ? "border-fuku-red bg-[#fff1f1] text-fuku-red" : "border-fuku-border bg-white text-fuku-black"
+                }`}
+              >
+                <Icon size={30} strokeWidth={2.3} />
+                <span className="mt-3 text-[13px] font-black leading-tight">{category.label}</span>
+                <span className="mt-1 line-clamp-2 text-[9px] font-bold leading-tight text-fuku-gray">{category.subtitle}</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      <div className="mt-6">
+        <div className="flex items-center justify-between gap-3">
+          <h3 className="text-[20px] font-black text-fuku-black">{selectedCategoryLabel}のMEET</h3>
+          <a href={`/meet?category=${selectedCategory}`} className="shrink-0 text-[12px] font-black text-fuku-black">
+            すべて見る →
+          </a>
+        </div>
+        <div className="mt-3 grid gap-3">
+          {categoryCommunities.slice(0, 3).map((community) => (
+            <CommunityListCard key={`${selectedCategory}-${community.id}`} community={community} />
+          ))}
+        </div>
+      </div>
+
       <div className="mt-6 grid gap-3">
-        {listed.map((community) => (
+        {communities.slice(3, 5).map((community) => (
           <CommunityListCard key={community.id} community={community} />
         ))}
       </div>
