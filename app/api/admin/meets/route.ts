@@ -62,5 +62,21 @@ export async function POST(request: Request) {
     .select("content")
     .single();
   if (error) return Response.json({ error: error.message }, { status: 500 });
+
+  const categoryIds = content.homeCategoryIds ?? [];
+  const { error: deleteLinksError } = await supabase.from("meet_category_links").delete().eq("meet_slug", content.slug);
+  if (deleteLinksError) return Response.json({ error: deleteLinksError.message }, { status: 500 });
+
+  if (categoryIds.length) {
+    const links = categoryIds.map((categoryId, index) => ({
+      category_id: categoryId,
+      meet_slug: content.slug,
+      sort_order: content.homeCategorySortOrder ?? index,
+      is_pickup: content.homePickup ?? false,
+    }));
+    const { error: insertLinksError } = await supabase.from("meet_category_links").insert(links);
+    if (insertLinksError) return Response.json({ error: insertLinksError.message }, { status: 500 });
+  }
+
   return Response.json({ community: data.content as CommunityMeet, source: "supabase" });
 }

@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import AdminLayout from "./AdminLayout";
 import AdminFormField from "./AdminFormField";
 import AdminImagePicker from "./AdminImagePicker";
-import { defaultCommunities, getAdminCommunitiesAsync, saveAdminCommunityAsync } from "@/lib/communityMeet";
+import { defaultCommunities, getAdminCommunitiesAsync, homeMeetCategories, saveAdminCommunityAsync } from "@/lib/communityMeet";
 import type { CommunityMeet } from "@/types/communityMeet";
 
 type CommunityFormState = Pick<
@@ -69,6 +69,9 @@ type CommunityFormState = Pick<
   waitlistEnabled: boolean;
   autoPromoteWaitlist: boolean;
   relatedMeetTabsText: string;
+  homeCategoryIds: string[];
+  homePickup: boolean;
+  homeCategorySortOrder: number;
 };
 
 const base = defaultCommunities[0];
@@ -136,6 +139,9 @@ function toFormState(item?: CommunityMeet): CommunityFormState {
     waitlistEnabled: source.cancelPolicy?.waitlistEnabled ?? true,
     autoPromoteWaitlist: source.cancelPolicy?.autoPromoteWaitlist ?? false,
     relatedMeetTabsText: formatRelatedMeetTabs(source.relatedMeetTabs),
+    homeCategoryIds: source.homeCategoryIds ?? [],
+    homePickup: source.homePickup ?? false,
+    homeCategorySortOrder: source.homeCategorySortOrder ?? 0,
   };
 }
 
@@ -304,6 +310,9 @@ export default function AdminCommunityForm({ mode }: { mode: "new" | "edit" }) {
           autoPromoteWaitlist: form.autoPromoteWaitlist,
         },
         relatedMeetTabs,
+        homeCategoryIds: form.homeCategoryIds,
+        homePickup: form.homePickup,
+        homeCategorySortOrder: Number(form.homeCategorySortOrder || 0),
         updatedAt: now,
         createdAt: mode === "new" ? now : undefined,
       };
@@ -373,6 +382,52 @@ export default function AdminCommunityForm({ mode }: { mode: "new" | "edit" }) {
         <AdminFormField label="説明文" type="textarea" value={form.description} onChange={(value) => setField("description", value)} placeholder="このMEETの説明" />
         <AdminFormField label="タグ（/ 区切り）" value={form.tagsText} onChange={(value) => setField("tagsText", value)} placeholder="一人参加OK / 男女ペアOK / 20代中心" />
         <AdminFormField label="注意事項・キャンセル規定（改行区切り）" type="textarea" value={form.noticesText} onChange={(value) => setField("noticesText", value)} />
+        <div className="grid gap-3 rounded-[14px] border border-fuku-border bg-white p-4">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="text-[13px] font-black text-fuku-black">HOMEカテゴリ表示</p>
+              <p className="mt-1 text-[11px] font-bold text-fuku-gray">HOMEの「カテゴリで探す」と /meet の表示に使います。</p>
+            </div>
+            <label className="flex items-center gap-2 text-[12px] font-black text-fuku-black">
+              <input
+                type="checkbox"
+                checked={form.homePickup}
+                onChange={(event) => setField("homePickup", event.target.checked)}
+                className="h-4 w-4 accent-fuku-red"
+              />
+              ピックアップ優先
+            </label>
+          </div>
+          <div className="grid gap-2 sm:grid-cols-2">
+            {homeMeetCategories.map((category) => {
+              const checked = form.homeCategoryIds.includes(category.id);
+              return (
+                <label key={category.id} className={`rounded-[12px] border p-3 text-[12px] font-black ${checked ? "border-fuku-red bg-[#fff1f1] text-fuku-red" : "border-fuku-border text-fuku-black"}`}>
+                  <input
+                    type="checkbox"
+                    checked={checked}
+                    onChange={(event) => {
+                      const next = event.target.checked
+                        ? [...form.homeCategoryIds, category.id]
+                        : form.homeCategoryIds.filter((id) => id !== category.id);
+                      setField("homeCategoryIds", next);
+                    }}
+                    className="mr-2 h-4 w-4 accent-fuku-red"
+                  />
+                  {category.label}
+                  <span className="mt-1 block text-[11px] font-bold text-fuku-gray">{category.subtitle}</span>
+                </label>
+              );
+            })}
+          </div>
+          <AdminFormField
+            label="カテゴリ内の表示順"
+            type="number"
+            value={String(form.homeCategorySortOrder)}
+            onChange={(value) => setField("homeCategorySortOrder", Number(value))}
+            placeholder="0"
+          />
+        </div>
         <AdminFormField
           label="参加者プロフィール（1行: 性別 | 年齢層 | 居住地/遠征元 | ファン歴 | 推し曲 | 一言）"
           type="textarea"

@@ -21,6 +21,16 @@ export const meetCategories = [
   { id: "sauna", label: "サウナ", caption: "ととのい仲間" },
 ];
 
+export const homeMeetCategories = [
+  { id: "men-relaxed", label: "男同士で気楽に", subtitle: "気を使わず話せるMEET", icon: "users", sortOrder: 1, isVisible: true },
+  { id: "women-safe", label: "女の子同士で安心", subtitle: "女性参加者が選びやすいMEET", icon: "heart-users", sortOrder: 2, isVisible: true },
+  { id: "new-fukuoka", label: "福岡はじめまして", subtitle: "福岡に来たばかりの人へ", icon: "handshake", sortOrder: 3, isVisible: true },
+  { id: "expedition", label: "福岡遠征", subtitle: "ライブ・イベント遠征の夜に", icon: "suitcase", sortOrder: 4, isVisible: true },
+  { id: "tourism", label: "観光ついでにMEET", subtitle: "旅先で地元のリアルに会う", icon: "camera", sortOrder: 5, isVisible: true },
+] as const;
+
+export type HomeMeetCategoryId = (typeof homeMeetCategories)[number]["id"];
+
 export const defaultHosts: CommunityHost[] = [
   {
     id: "host-naoto",
@@ -368,6 +378,165 @@ export const defaultCommunities: CommunityMeet[] = [
     updatedAt: now,
   },
 ];
+
+function communityBySlug(slug: string) {
+  return defaultCommunities.find((item) => item.slug === slug) ?? defaultCommunities[0];
+}
+
+function fallbackMeet(slug: string, overrides: Partial<CommunityMeet>) {
+  const source = communityBySlug(slug);
+  return {
+    ...source,
+    ...overrides,
+    id: overrides.id ?? overrides.slug ?? source.id,
+    slug: overrides.slug ?? source.slug,
+    fee: overrides.fee ?? source.fee ?? 800,
+    status: "published" as const,
+    updatedAt: now,
+    createdAt: source.createdAt,
+  };
+}
+
+export function getFallbackCategoryMeets(categoryId: string): CommunityMeet[] {
+  const fallbacks: Record<string, CommunityMeet[]> = {
+    "women-safe": [
+      fallbackMeet("girls-daimyo", {
+        id: "girls-lunch-cafe",
+        slug: "girls-lunch-cafe",
+        title: "女子会ランチ＆カフェ",
+        area: "博多",
+        category: "女子会",
+        tags: ["女性限定", "初参加歓迎", "一人参加OK"],
+        participantCount: 6,
+        maleRatio: 0,
+        femaleRatio: 100,
+        safety: { womenOnly: true, soloOk: true, firstTimerRate: 80, localRate: 65, travelerRate: 35, maleCount: 0, femaleCount: 6, locationHiddenUntilJoined: true },
+      }),
+      fallbackMeet("yuru-cafe-yakuin", {
+        id: "night-cafe-girls-talk",
+        slug: "night-cafe-girls-talk",
+        title: "夜カフェでゆるトーク会",
+        area: "天神",
+        category: "女子会",
+        tags: ["女性限定", "一人参加OK", "夜カフェ"],
+        participantCount: 8,
+        maleRatio: 0,
+        femaleRatio: 100,
+        safety: { womenOnly: true, soloOk: true, firstTimerRate: 75, localRate: 70, travelerRate: 30, maleCount: 0, femaleCount: 8, locationHiddenUntilJoined: true },
+      }),
+      fallbackMeet("girls-daimyo", {
+        id: "hajimemashite-girls-meet",
+        slug: "hajimemashite-girls-meet",
+        title: "はじめましての女子会",
+        area: "博多",
+        category: "女子会",
+        tags: ["初参加歓迎", "女性限定", "一人参加OK"],
+        participantCount: 6,
+        maleRatio: 0,
+        femaleRatio: 100,
+      }),
+    ],
+    expedition: [
+      communityBySlug("creep-hype-live-drink"),
+      fallbackMeet("creep-hype-live-drink", {
+        id: "zepp-fukuoka-after-live-meet",
+        slug: "zepp-fukuoka-after-live-meet",
+        title: "Zepp Fukuoka帰りMEET",
+        publicAreaLabel: "Zepp Fukuoka周辺 / 天神エリア",
+        area: "天神",
+        tags: ["福岡遠征", "ライブ後", "一人参加OK"],
+        participantCount: 10,
+        maleRatio: 35,
+        femaleRatio: 65,
+      }),
+      fallbackMeet("creep-hype-live-drink", {
+        id: "marine-messe-after-live-meet",
+        slug: "marine-messe-after-live-meet",
+        title: "マリンメッセ帰りMEET",
+        publicAreaLabel: "マリンメッセ周辺 / 博多エリア",
+        area: "博多",
+        tags: ["福岡遠征", "ライブ後", "初参加歓迎"],
+        participantCount: 9,
+        maleRatio: 40,
+        femaleRatio: 60,
+      }),
+    ],
+    "new-fukuoka": [
+      communityBySlug("visitor-fukuoka-first-night"),
+      fallbackMeet("visitor-fukuoka-first-night", {
+        id: "tenjin-friends-first-meet",
+        slug: "tenjin-friends-first-meet",
+        title: "天神で友達づくりMEET",
+        area: "天神",
+        tags: ["福岡はじめまして", "一人参加OK", "地元民も参加"],
+        participantCount: 7,
+      }),
+      fallbackMeet("visitor-fukuoka-first-night", {
+        id: "hakata-solo-first-meet",
+        slug: "hakata-solo-first-meet",
+        title: "博多駅近くの一人参加MEET",
+        area: "博多",
+        tags: ["一人参加OK", "初参加歓迎", "駅近"],
+        participantCount: 8,
+      }),
+    ],
+    "men-relaxed": [
+      fallbackMeet("drink-now-tenjin", {
+        id: "men-relaxed-drink",
+        slug: "men-relaxed-drink",
+        title: "男同士で気楽に飲む会",
+        tags: ["男同士で気楽に", "仕事帰り", "個別会計推奨"],
+        participantCount: 8,
+        maleRatio: 100,
+        femaleRatio: 0,
+        safety: { womenOnly: false, soloOk: true, firstTimerRate: 60, localRate: 80, travelerRate: 20, maleCount: 8, femaleCount: 0, locationHiddenUntilJoined: true },
+      }),
+      fallbackMeet("midnight-nakasu-talk", {
+        id: "sauna-after-meet",
+        slug: "sauna-after-meet",
+        title: "サウナ帰りMEET",
+        category: "サウナ",
+        tags: ["男同士で気楽に", "サウナ", "一人参加OK"],
+        participantCount: 5,
+      }),
+      fallbackMeet("drink-now-tenjin", {
+        id: "ramen-night-meet",
+        slug: "ramen-night-meet",
+        title: "ラーメン好き夜ごはんMEET",
+        category: "ラーメン",
+        tags: ["男同士で気楽に", "ラーメン", "夜ごはん"],
+        participantCount: 6,
+      }),
+    ],
+    tourism: [
+      fallbackMeet("visitor-fukuoka-first-night", {
+        id: "tourism-night-dinner",
+        slug: "tourism-night-dinner",
+        title: "観光ついでに福岡夜ごはん",
+        tags: ["観光ついでにMEET", "地元民も参加", "一人参加OK"],
+        participantCount: 7,
+      }),
+      fallbackMeet("visitor-fukuoka-first-night", {
+        id: "hakata-yatai-first-guide-meet",
+        slug: "hakata-yatai-first-guide-meet",
+        title: "博多屋台はじめてガイドMEET",
+        area: "博多",
+        tags: ["観光", "屋台", "初参加歓迎"],
+        participantCount: 5,
+      }),
+      fallbackMeet("yuru-cafe-yakuin", {
+        id: "tenjin-cafe-travel-talk",
+        slug: "tenjin-cafe-travel-talk",
+        title: "天神カフェで旅の話MEET",
+        area: "天神",
+        tags: ["観光", "カフェ", "一人参加OK"],
+        participantCount: 6,
+      }),
+    ],
+  };
+
+  return fallbacks[categoryId] ?? fallbacks["women-safe"];
+}
 
 function canUseStorage() {
   return typeof window !== "undefined" && Boolean(window.localStorage);

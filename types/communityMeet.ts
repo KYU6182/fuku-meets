@@ -91,6 +91,9 @@ export type CommunityMeet = {
     type: string;
     meetSlugs: string[];
   }>;
+  homeCategoryIds?: string[];
+  homePickup?: boolean;
+  homeCategorySortOrder?: number;
   hostId: string;
   hostName: string;
   hostAvatar: string;
@@ -110,7 +113,7 @@ export type CommunityParticipant = {
   avatar: string;
   ageRange: string;
   area: string;
-  status: "interested" | "joined" | "checked_in" | "cancelled";
+  status: "interested" | "joined" | "confirmed" | "checked_in" | "cancelled";
   createdAt: string;
 };
 
