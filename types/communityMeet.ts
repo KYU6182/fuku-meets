@@ -35,6 +35,62 @@ export type CommunityMeet = {
   isVerifiedOnly: boolean;
   relatedNewsIds?: string[];
   relatedLiveIds?: string[];
+  safety?: {
+    womenOnly?: boolean;
+    soloOk?: boolean;
+    splitBillRecommended?: boolean;
+    identityVerifiedRequired?: boolean;
+    locationHiddenUntilJoined?: boolean;
+    firstTimerRate?: number;
+    localRate?: number;
+    travelerRate?: number;
+    maleCount?: number;
+    femaleCount?: number;
+  };
+  artist?: {
+    name?: string;
+    slug?: string;
+  };
+  participantProfiles?: Array<{
+    id: string;
+    iconUrl?: string;
+    genderLabel: string;
+    ageLabel: string;
+    areaLabel: string;
+    fanHistory?: string;
+    favoriteSong?: string;
+    comment?: string;
+  }>;
+  faqs?: Array<{
+    id: string;
+    question: string;
+    answer: string;
+    order?: number;
+  }>;
+  joinOptions?: {
+    canLeaveEarly?: boolean;
+    canJoinLate?: boolean;
+    nonAlcoholOk?: boolean;
+    firstTimerSupport?: boolean;
+  };
+  privateLocation?: {
+    venueName?: string;
+    address?: string;
+    googleMapUrl?: string;
+    reservationName?: string;
+    meetingMemo?: string;
+    hostContactMemo?: string;
+  };
+  cancelPolicy?: {
+    cancelUntil?: string;
+    waitlistEnabled?: boolean;
+    autoPromoteWaitlist?: boolean;
+  };
+  relatedMeetTabs?: Array<{
+    label: string;
+    type: string;
+    meetSlugs: string[];
+  }>;
   hostId: string;
   hostName: string;
   hostAvatar: string;
